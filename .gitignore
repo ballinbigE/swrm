@@ -1,0 +1,23 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+
+# Local state — never committed
+.loom/
+.loomrc.local.json
+*.db
+*.db-shm
+*.db-wal
+
+# Worktree root (when default ~/Library/... is overridden to repo-local for tests)
+/tmp/pm-wt/
+/tmp/loom-wt/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db

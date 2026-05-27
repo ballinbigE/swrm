@@ -1,0 +1,15 @@
+src/
+tests/
+__tests__/
+plugins/
+docs/
+*.test.ts
+*.config.ts
+tsconfig.json
+jest.config.cjs
+.gitignore
+.loomrc.local.json
+.loomrc.example.json
+prd-*.json
+coverage/
+.github/
