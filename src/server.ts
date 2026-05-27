@@ -24,7 +24,7 @@ import { suggestionsApiHandler } from './api/suggestions';
 import { attemptsApiHandler } from './api/attempts';
 import { attemptDiffHandler } from './api/diff';
 import { attemptCommentsHandler } from './api/attempt_comments';
-import { simScreenshotHandler } from './api/sim_screenshot';
+import { previewHandler } from './api/preview';
 import { workspaceStreamHandler } from './api/workspace_stream';
 import { planApiHandler } from './api/plan';
 import { workspaceHandler } from './views/workspace';
@@ -117,7 +117,7 @@ async function main(): Promise<void> {
     if (await labelsApiHandler(req, res, db)) return;
     if (workspaceStreamHandler(req, res)) return;
     if (await planApiHandler(req, res)) return;
-    if (await simScreenshotHandler(req, res)) return;
+    if (await previewHandler(req, res, db)) return;
     if (await attemptDiffHandler(req, res, db)) return;
     if (await attemptCommentsHandler(req, res, db)) return;
     if (await attemptsApiHandler(req, res, db)) return;
