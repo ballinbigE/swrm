@@ -1,0 +1,17 @@
+{
+  "port": 5173,
+  "dbPath": ".loom/loom.db",
+  "worktreeRoot": null,
+  "plugins": [
+    "@loom/preview-ios"
+  ],
+  "agentBinaries": {
+    "claude-code": "claude",
+    "codex": "codex",
+    "gemini": "gemini"
+  },
+  "syncMd": {
+    "enabled": false,
+    "files": ["tasks/todo.md", "tasks/backlog.md"]
+  }
+}
