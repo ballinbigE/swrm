@@ -1,0 +1,162 @@
+// scripts/pm/server.ts — one-command boot for the Personal AI PM System.
+// `npm run pm` → migrate → seed-if-empty → start http server on $DASHBOARD_PORT
+// (default 5173) → print boot log.
+//
+// Per US-003 of tasks/prd-personal-ai-pm-system.md. Replaces the standalone
+// pm_dashboard.ts entrypoint (which is now an importable handler — kept
+// callable via `npm run dashboard` for backward-compat until US-011 lands).
+
+import * as http from 'node:http';
+import * as path from 'node:path';
+
+import { getDb, runPendingMigrations } from './db';
+import { gcOrphanWorktrees } from './lib/worktree';
+import { seedDefaults } from './seed';
+import { syncMarkdownToSqlite } from './sync_md';
+import { boardsApiHandler } from './api/boards';
+import { tasksApiHandler } from './api/tasks';
+import { subtasksApiHandler } from './api/subtasks';
+import { labelsApiHandler } from './api/labels';
+import { epicsApiHandler } from './api/epics';
+import { prioritizeBacklogHandler } from './api/agents/prioritize_backlog';
+import { bugFixIngestHandler } from './api/agents/bug_fix';
+import { suggestionsApiHandler } from './api/suggestions';
+import { attemptsApiHandler } from './api/attempts';
+import { attemptDiffHandler } from './api/diff';
+import { attemptCommentsHandler } from './api/attempt_comments';
+import { simScreenshotHandler } from './api/sim_screenshot';
+import { workspaceStreamHandler } from './api/workspace_stream';
+import { planApiHandler } from './api/plan';
+import { workspaceHandler } from './views/workspace';
+import { tasksListHandler } from './views/tasks_list';
+// Legacy markdown-mirror kanban dropped in loom (was tied to nugget-specific
+// tasks/backlog.md format). The SQLite-backed /tasks view is the canonical
+// kanban now. M5/M8 may re-introduce a generic markdown kanban — TBD.
+
+const PORT = Number(process.env.LOOM_PORT ?? process.env.DASHBOARD_PORT ?? 5173);
+const ROOT = process.cwd();
+
+// shipped.md mirror lives under the consumer's CWD; let them point elsewhere
+// via env. Default = .loom/shipped.md so it doesn't collide with the consumer's
+// own tasks/ directory.
+if (!process.env.PM_SHIPPED_MD_PATH) {
+  process.env.PM_SHIPPED_MD_PATH = path.join(ROOT, '.loom', 'shipped.md');
+}
+
+function bootBanner(dbVersion: number, taskCount: number): void {
+  // eslint-disable-next-line no-console
+  console.log(`[loom] http://localhost:${PORT} · DB v${dbVersion} · ${taskCount} task${taskCount === 1 ? '' : 's'}`);
+}
+
+async function main(): Promise<void> {
+  // 1. migrate
+  const db = getDb();
+  const migrate = runPendingMigrations(db);
+  if (migrate.applied.length > 0) {
+    // eslint-disable-next-line no-console
+    console.log(`[loom] applied ${migrate.applied.length} migration(s)`);
+  }
+
+  // 2. seed-if-empty
+  const seed = seedDefaults(db);
+  if (!seed.skipped) {
+    // eslint-disable-next-line no-console
+    console.log(`[loom] seeded ${seed.boards_inserted} board(s) + ${seed.labels_inserted} label(s)`);
+  }
+
+  // 3. orphan-worktree GC. Run once per distinct repo_root so each repo
+  // gets its own `git worktree remove` cycle (multi-repo support).
+  try {
+    const rows = db.prepare(`SELECT worktree_path, repo_root FROM attempts`).all() as Array<{
+      worktree_path: string;
+      repo_root: string;
+    }>;
+    const tracked = rows.map((r) => r.worktree_path);
+    const repos = new Set<string>([ROOT, ...rows.map((r) => r.repo_root).filter((r) => r && r.length > 0)]);
+    let totalRemoved = 0;
+    for (const repo of repos) {
+      const gc = await gcOrphanWorktrees(tracked, { repoRoot: repo });
+      totalRemoved += gc.removed.length;
+    }
+    if (totalRemoved > 0) {
+      // eslint-disable-next-line no-console
+      console.log(`[loom] gc removed ${totalRemoved} orphan worktree(s) across ${repos.size} repo(s)`);
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[loom] gc skipped:', (err as Error).message);
+  }
+
+  // 3b. markdown ↔ SQLite reconcile (non-fatal on parse error)
+  try {
+    const path = require('node:path') as typeof import('node:path');
+    const sync = syncMarkdownToSqlite(db, [
+      path.join(ROOT, 'tasks', 'todo.md'),
+      path.join(ROOT, 'tasks', 'backlog.md'),
+    ]);
+    if (sync.inserted > 0 || sync.archived > 0) {
+      // eslint-disable-next-line no-console
+      console.log(`[loom] sync-md inserted ${sync.inserted} · archived ${sync.archived} · unchanged ${sync.unchanged}`);
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[loom] sync-md skipped:', (err as Error).message);
+  }
+
+  // 4. count tasks for the boot banner
+  const taskCount = (db.prepare(`SELECT COUNT(*) AS n FROM tasks WHERE archived_at IS NULL`).get() as { n: number }).n;
+
+  // 4. boot http server. /api/* routes go first (US-004+), then the
+  // markdown-mirror kanban handler at /, then 404.
+  const server = http.createServer(async (req, res) => {
+    if (boardsApiHandler(req, res, db)) return;
+    // Nested-under-task routes first — subtasks, labels, attempts all mount
+    // at /api/tasks/:id/{subtasks,labels,attempts} which would collide with
+    // the tasks handler's /api/tasks/:id$ matcher if it ran first.
+    if (await subtasksApiHandler(req, res, db)) return;
+    if (await labelsApiHandler(req, res, db)) return;
+    if (workspaceStreamHandler(req, res)) return;
+    if (await planApiHandler(req, res)) return;
+    if (await simScreenshotHandler(req, res)) return;
+    if (await attemptDiffHandler(req, res, db)) return;
+    if (await attemptCommentsHandler(req, res, db)) return;
+    if (await attemptsApiHandler(req, res, db)) return;
+    if (await workspaceHandler(req, res, db)) return;
+    if (await tasksListHandler(req, res, db)) return;
+    if (await tasksApiHandler(req, res, db)) return;
+    if (await epicsApiHandler(req, res, db)) return;
+    if (await prioritizeBacklogHandler(req, res, db)) return;
+    if (await bugFixIngestHandler(req, res, db)) return;
+    if (suggestionsApiHandler(req, res, db)) return;
+    // Redirect bare '/' to /tasks (kanban entry) until M8 promotes the
+    // idea-input form to the home page.
+    if ((req.url ?? '/') === '/' || (req.url ?? '/') === '/index.html') {
+      res.writeHead(302, { Location: '/tasks' });
+      res.end();
+      return;
+    }
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not Found');
+  });
+
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      // eslint-disable-next-line no-console
+      console.error(`[loom] port ${PORT} already in use — another dashboard running? Try: lsof -ti:${PORT} | xargs kill`);
+      process.exit(1);
+    }
+    // eslint-disable-next-line no-console
+    console.error('[loom] server error:', err);
+    process.exit(1);
+  });
+
+  server.listen(PORT, '127.0.0.1', () => {
+    bootBanner(migrate.current, taskCount);
+  });
+}
+
+main().catch((err) => {
+  // eslint-disable-next-line no-console
+  console.error('[loom] fatal:', err);
+  process.exit(1);
+});
