@@ -1,6 +1,7 @@
 // US-007 — in-process orchestrator: due-selection, single-flight, catch-up, stale-lock reset.
 
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import Database from 'better-sqlite3';
@@ -130,5 +131,31 @@ describe('resetStaleRunning (US-007)', () => {
     resetStaleRunning(db, new Date());
     expect((db.prepare(`SELECT last_status FROM skills WHERE id = ?`).get(stale) as { last_status: string }).last_status).toBe('error');
     expect((db.prepare(`SELECT last_status FROM skills WHERE id = ?`).get(fresh) as { last_status: string }).last_status).toBe('running');
+  });
+});
+
+describe('tickOnce dir resync', () => {
+  it('re-syncs new skill cards from syncDir each tick (no restart needed)', async () => {
+    const db = makeDb();
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tick-sync-'));
+    try {
+      fs.writeFileSync(
+        path.join(dir, 'new.skill.md'),
+        ['---', 'name: fresh-card', 'project: p', 'type: command', 'frequency: 1h', 'side_effects: read-only', 'command: echo hi', '---', '# Fresh', ''].join('\n'),
+      );
+      const { runner } = okRunner();
+      await tickOnce(db, { now: NOW, runner, syncDir: dir });
+      const row = db.prepare(`SELECT name FROM skills WHERE name = 'fresh-card'`).get();
+      expect(row).toBeTruthy();
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('a failed dir sync does not crash the tick', async () => {
+    const db = makeDb();
+    const { runner } = okRunner();
+    // Pointing at a bogus path is tolerated (missing dir → no-op, no throw).
+    await expect(tickOnce(db, { now: NOW, runner, syncDir: '/no/such/skills/dir' })).resolves.toEqual({ ran: 0 });
   });
 });

@@ -123,7 +123,9 @@ async function main(): Promise<void> {
       // eslint-disable-next-line no-console
       console.log(`[swrm] skills synced: +${sk.inserted} ~${sk.updated} (=${sk.unchanged})`);
     }
-    startOrchestrator(db, { cwdFor: () => ROOT });
+    // Pass syncDir so each tick re-syncs the cards — new/edited *.skill.md
+    // appear without a server restart.
+    startOrchestrator(db, { cwdFor: () => ROOT, syncDir: skillsDir });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.warn('[swrm] skill mode skipped:', (err as Error).message);
