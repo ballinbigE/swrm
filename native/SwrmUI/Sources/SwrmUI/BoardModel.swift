@@ -37,6 +37,15 @@ public final class BoardModel: ObservableObject {
         present(pickedFolder: url, saveBookmark: true)
     }
 
+    /// Re-open the folder saved on a previous launch, if any.
+    public func restoreLastFolder() {
+        guard let url = bookmarkStore.resolve() else {
+            state = .idle
+            return
+        }
+        present(pickedFolder: url, saveBookmark: false)
+    }
+
     private func present(pickedFolder: URL, saveBookmark: Bool) {
         // Release any previously-open folder.
         watcher?.stop(); watcher = nil

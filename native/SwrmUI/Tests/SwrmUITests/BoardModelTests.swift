@@ -50,6 +50,29 @@ final class BoardModelTests: XCTestCase {
         if case .error = model.state { } else { XCTFail("expected .error, got \(model.state)") }
     }
 
+    func testRestoreWithNoBookmarkIsIdle() {
+        let model = BoardModel(bookmarkStore: BookmarkStore(defaults: Self.scratchDefaults()))
+        model.restoreLastFolder()
+        XCTAssertEqual(model.state, .idle)
+    }
+
+    func testRestoreReopensSavedFolder() throws {
+        let dir = try makeStoriesDir([
+            "---\nid: sc-1\nstate: started\n---\nWire login",
+        ])
+        let defaults = Self.scratchDefaults()
+
+        // First launch: open + persist.
+        let first = BoardModel(bookmarkStore: BookmarkStore(defaults: defaults))
+        first.openFolder(dir)
+        XCTAssertEqual(storiesCount(first.state), 1)
+
+        // Second launch: a fresh model restores from the same store.
+        let second = BoardModel(bookmarkStore: BookmarkStore(defaults: defaults))
+        second.restoreLastFolder()
+        XCTAssertEqual(storiesCount(second.state), 1)
+    }
+
     // MARK: helpers (used by later tasks too)
 
     static func scratchDefaults() -> UserDefaults {
