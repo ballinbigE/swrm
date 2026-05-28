@@ -1,11 +1,11 @@
-// @loom/preview-ios — iOS Simulator screenshot preview plugin.
+// @swrm/preview-ios — iOS Simulator screenshot preview plugin.
 //
 // Captures the booted iPhone via `xcrun simctl io booted screenshot
 // <tmpfile>` (simctl treats `-` as a literal filename, not stdout),
 // reads the file, deletes it, returns the PNG bytes. Cached in-memory
 // for MIN_INTERVAL_MS to spare the simulator under polling. Falls back
 // to a 1×1 transparent PNG on non-darwin / no booted sim — keeps the
-// loom iframe layout intact.
+// swrm iframe layout intact.
 //
 // macOS + Xcode required for non-fallback behavior.
 
@@ -14,8 +14,8 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-// PreviewPlugin contract imported from the loom package. We use a local
-// shape declaration here so plugin can build stand-alone without loom in
+// PreviewPlugin contract imported from the swrm package. We use a local
+// shape declaration here so plugin can build stand-alone without swrm in
 // node_modules — the runtime contract is duck-typed.
 interface PreviewContext {
   task: { id: number; title: string; description: string | null; status: string };
@@ -52,7 +52,7 @@ let inflight: Promise<Buffer> | null = null;
 function spawnScreenshot(): Promise<Buffer> {
   const tmpFile = path.join(
     os.tmpdir(),
-    `loom-sim-screenshot-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`,
+    `swrm-sim-screenshot-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`,
   );
 
   return new Promise((resolve, reject) => {

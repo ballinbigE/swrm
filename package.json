@@ -1,9 +1,9 @@
 {
-  "name": "loomctl",
+  "name": "swrm",
   "version": "0.1.0",
   "description": "MCP-native kanban for parallel coding agents. Markdown-friendly. Localhost-first.",
   "bin": {
-    "loom": "dist/cli.js"
+    "swrm": "dist/cli.js"
   },
   "main": "dist/index.js",
   "exports": {
@@ -29,13 +29,13 @@
   },
   "license": "Apache-2.0",
   "author": "Erick Bzovi",
-  "homepage": "https://github.com/ballinbigE/loom",
+  "homepage": "https://github.com/ballinbigE/swrm",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ballinbigE/loom.git"
+    "url": "git+https://github.com/ballinbigE/swrm.git"
   },
   "bugs": {
-    "url": "https://github.com/ballinbigE/loom/issues"
+    "url": "https://github.com/ballinbigE/swrm/issues"
   },
   "keywords": [
     "kanban",

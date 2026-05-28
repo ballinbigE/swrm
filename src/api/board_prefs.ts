@@ -1,4 +1,4 @@
-// loom/src/api/board_prefs.ts — per-board preferences.
+// swrm/src/api/board_prefs.ts — per-board preferences.
 //   PATCH /api/boards/:id/prefs   body: { color?, name?, workflow? }
 //
 // Minimal, deliberately: a board gets a color (kanban accent) and a

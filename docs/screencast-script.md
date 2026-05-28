@@ -4,13 +4,13 @@ Record this for the README hero GIF. Tool: any screen recorder + `gifski` to com
 
 ## Setup (before recording)
 - Terminal + browser side by side, dark theme
-- Clean `.loom/` (rm -rf .loom) so the board starts empty
+- Clean `.swrm/` (rm -rf .swrm) so the board starts empty
 - A throwaway git repo in cwd with at least one commit on `main`
 - `ANTHROPIC_API_KEY` exported
 
 ## Beats (target ~30s)
 
-1. **0-3s** — Terminal: type `npx loom`, hit enter. Show `[loom] http://localhost:5173` boot line.
+1. **0-3s** — Terminal: type `npx swrm`, hit enter. Show `[swrm] http://localhost:5173` boot line.
 2. **3-6s** — Browser opens localhost:5173. Home view shows the idea-input box (M8).
 3. **6-11s** — Type into the box: `Add a dark-mode toggle that persists across sessions`. Click **Generate & Execute**.
 4. **11-16s** — Plan preview renders: 4 stories appear with tech_stack badge. Click **Save & spawn first attempt**.
@@ -19,7 +19,7 @@ Record this for the README hero GIF. Tool: any screen recorder + `gifski` to com
 7. **25-30s** — Click a diff line → composer → type "tighten this" → cmd+enter. Press `m` → merge toast. End on the green "merged into main" toast.
 
 ## Caption overlay (optional)
-- "idea → PRD → agent → diff → merge. localhost. `npx loom`."
+- "idea → PRD → agent → diff → merge. localhost. `npx swrm`."
 
 ## Export
 ```sh

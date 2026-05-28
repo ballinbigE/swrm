@@ -468,7 +468,7 @@ export function renderWorkspaceHtml(payload: WorkspacePayload): string {
 <style>${CSS}</style>
 </head><body>
 <header class="topbar">
-  <a class="brand" href="/" style="text-decoration: none" title="Board">Loom</a>
+  <a class="brand" href="/" style="text-decoration: none" title="Board">Swrm</a>
   <span class="slash">/</span>
   <a href="/tasks" class="title" style="text-decoration: none" title="Tasks list">workspace</a>
   <span class="slash">/</span>

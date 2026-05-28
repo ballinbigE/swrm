@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-// loom — CLI entry. `npx loom` boots the server. `loom mcp` boots the MCP
+// swrm — CLI entry. `npx swrm` boots the server. `swrm mcp` boots the MCP
 // stdio server (for embedding via .mcp.json).
 //
 // Args:
-//   loom                  → boot http server at $LOOM_PORT (default 5173)
-//   loom mcp              → boot MCP JSON-RPC stdio server
-//   loom plan --idea ...  → AI Project Breakdown CLI (delegates to plan)
-//   loom --version        → print version + exit
-//   loom --help           → print usage + exit
+//   swrm                  → boot http server at $SWRM_PORT (default 5173)
+//   swrm mcp              → boot MCP JSON-RPC stdio server
+//   swrm plan --idea ...  → AI Project Breakdown CLI (delegates to plan)
+//   swrm --version        → print version + exit
+//   swrm --help           → print usage + exit
 
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
@@ -26,22 +26,22 @@ function readVersion(): string {
 
 function printHelp(): void {
   // eslint-disable-next-line no-console
-  console.log(`loom v${readVersion()} — MCP-native kanban for parallel coding agents
+  console.log(`swrm v${readVersion()} — MCP-native kanban for parallel coding agents
 
 USAGE:
-  loom                       Boot dashboard at http://localhost:$LOOM_PORT (default 5173)
-  loom mcp                   Boot MCP JSON-RPC stdio server (for .mcp.json)
-  loom plan --idea "..."     Generate a PRD from an idea (writes prd-<slug>.json)
-  loom --version             Print version
-  loom --help                Print this help
+  swrm                       Boot dashboard at http://localhost:$SWRM_PORT (default 5173)
+  swrm mcp                   Boot MCP JSON-RPC stdio server (for .mcp.json)
+  swrm plan --idea "..."     Generate a PRD from an idea (writes prd-<slug>.json)
+  swrm --version             Print version
+  swrm --help                Print this help
 
 ENV:
-  LOOM_PORT                  Override the http port
-  LOOM_DB_PATH               Override the SQLite db path (default .loom/loom.db under cwd)
+  SWRM_PORT                  Override the http port
+  SWRM_DB_PATH               Override the SQLite db path (default .swrm/swrm.db under cwd)
   PM_WORKTREE_ROOT           Override the git worktree root
-  ANTHROPIC_API_KEY          Required for AI Project Breakdown (loom plan)
+  ANTHROPIC_API_KEY          Required for AI Project Breakdown (swrm plan)
 
-DOCS: https://github.com/ballinbigE/loom
+DOCS: https://github.com/ballinbigE/swrm
 `);
 }
 
@@ -77,6 +77,6 @@ async function main(): Promise<void> {
 
 main().catch((err) => {
   // eslint-disable-next-line no-console
-  console.error('[loom] fatal:', err instanceof Error ? err.message : String(err));
+  console.error('[swrm] fatal:', err instanceof Error ? err.message : String(err));
   process.exit(1);
 });

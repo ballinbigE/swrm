@@ -97,17 +97,17 @@ export function renderHomeHtml(opts: { hasApiKey: boolean } = { hasApiKey: false
   const hasApiKey = opts.hasApiKey === true;
   const disabledAttr = hasApiKey ? '' : ' disabled';
   const helperLine = hasApiKey
-    ? `Describe your build, then hit <b>Generate &amp; Execute</b> — Loom breaks it into Ralph-loop-ready stories.`
+    ? `Describe your build, then hit <b>Generate &amp; Execute</b> — Swrm breaks it into Ralph-loop-ready stories.`
     : `Set <code>ANTHROPIC_API_KEY</code> to use AI Breakdown — or go to <a href="/tasks">Tasks</a> to start manually.`;
 
   return `<!doctype html><html lang="en"><head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Loom — describe what you want to build</title>
+<title>Swrm — describe what you want to build</title>
 <style>${CSS}</style>
 </head><body>
 <header class="topbar">
-  <div class="brand">Loom <span class="slash">/</span> <span class="title">home</span></div>
+  <div class="brand">Swrm <span class="slash">/</span> <span class="title">home</span></div>
   <div class="spacer"></div>
   <a href="/tasks">tasks</a>
   <a href="/board">board</a>
@@ -211,7 +211,7 @@ async function generatePlan() {
     });
     if (r.status === 503) {
       const j = await r.json().catch(() => ({}));
-      setError((j.error || 'AI Breakdown unavailable') + (j.hint ? ' — ' + j.hint : ' — set ANTHROPIC_API_KEY and reboot Loom.'));
+      setError((j.error || 'AI Breakdown unavailable') + (j.hint ? ' — ' + j.hint : ' — set ANTHROPIC_API_KEY and reboot Swrm.'));
       return;
     }
     if (r.status === 400) {
@@ -261,7 +261,7 @@ async function saveAndSpawn() {
     });
     if (r.status === 503) {
       const j = await r.json().catch(() => ({}));
-      setError((j.error || 'AI Breakdown unavailable') + (j.hint ? ' — ' + j.hint : ' — set ANTHROPIC_API_KEY and reboot Loom.'));
+      setError((j.error || 'AI Breakdown unavailable') + (j.hint ? ' — ' + j.hint : ' — set ANTHROPIC_API_KEY and reboot Swrm.'));
       return;
     }
     if (r.status === 400) {

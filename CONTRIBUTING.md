@@ -1,10 +1,10 @@
-# Contributing to Loom
+# Contributing to Swrm
 
 ## Local development
 
 ```sh
-git clone https://github.com/ballinbigE/loom
-cd loom
+git clone https://github.com/ballinbigE/swrm
+cd swrm
 npm install
 npm run dev    # tsx src/cli.ts — boots dashboard at :5173
 ```
@@ -19,9 +19,9 @@ npm run build           # tsdown — outputs dist/
 
 ## Filing a bug
 
-Open a [GitHub issue](https://github.com/ballinbigE/loom/issues) with:
+Open a [GitHub issue](https://github.com/ballinbigE/swrm/issues) with:
 
-- Loom version (`loom --version`)
+- Swrm version (`swrm --version`)
 - Node version (`node --version`)
 - macOS / Linux / Windows
 - The exact CLI command + error output
@@ -29,11 +29,11 @@ Open a [GitHub issue](https://github.com/ballinbigE/loom/issues) with:
 
 ## Adding a preview plugin
 
-1. Create a new npm package (scope under `@loom/` if you want it discoverable).
+1. Create a new npm package (scope under `@swrm/` if you want it discoverable).
 2. Export a default object implementing `PreviewPlugin` (see `src/plugins/preview.d.ts`):
 
    ```ts
-   import type { PreviewPlugin } from 'loom';
+   import type { PreviewPlugin } from 'swrm';
    export default {
      name: 'my-preview',
      match(task) { return task.title.includes('web'); },
@@ -43,11 +43,11 @@ Open a [GitHub issue](https://github.com/ballinbigE/loom/issues) with:
    } satisfies PreviewPlugin;
    ```
 
-3. User adds `"plugins": ["my-preview-pkg"]` to their `.loomrc.json` and `npm install`s.
+3. User adds `"plugins": ["my-preview-pkg"]` to their `.swrmrc.json` and `npm install`s.
 
 ## Non-goals
 
-Loom is intentionally **not** going to add:
+Swrm is intentionally **not** going to add:
 
 - A hosted SaaS UI (that's a future opt-in cloud-sync tier, not core)
 - Team / collaboration / multi-user mode in core (it's localhost; if you want team features, that's a separate hosted offering later)

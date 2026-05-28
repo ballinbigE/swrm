@@ -1,10 +1,10 @@
-// loom/src/plugins/preview.ts — PreviewPlugin contract for the workspace
+// swrm/src/plugins/preview.ts — PreviewPlugin contract for the workspace
 // right pane. Core ships no preview plugins; consumer adds them via
-// .loomrc.json's "plugins" array.
+// .swrmrc.json's "plugins" array.
 //
 // Example plugin (a static-PNG plugin):
 //
-//   import type { PreviewPlugin } from 'loom';
+//   import type { PreviewPlugin } from 'swrm';
 //   const plugin: PreviewPlugin = {
 //     name: 'static-png',
 //     match: (task) => task.title.includes('design'),
@@ -61,7 +61,7 @@ export interface PreviewPlugin {
 }
 
 /**
- * Plugin registry. Populated at boot by reading .loomrc.json's "plugins"
+ * Plugin registry. Populated at boot by reading .swrmrc.json's "plugins"
  * array and require()-ing each one. Each module's default export must
  * implement PreviewPlugin.
  */

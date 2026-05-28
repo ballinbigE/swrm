@@ -34,23 +34,23 @@ import { boardHandler } from './views/board';
 import { homeHandler } from './views/home';
 import { settingsHandler } from './views/settings';
 import { boardPrefsHandler } from './api/board_prefs';
-// Legacy markdown-mirror kanban dropped in loom (was tied to the original host repo
+// Legacy markdown-mirror kanban dropped in swrm (was tied to the original host repo
 // tasks/backlog.md format). The SQLite-backed /tasks view is the canonical
 // kanban now; home '/' serves the idea-input form (M8).
 
-const PORT = Number(process.env.LOOM_PORT ?? process.env.DASHBOARD_PORT ?? 5173);
+const PORT = Number(process.env.SWRM_PORT ?? process.env.DASHBOARD_PORT ?? 5173);
 const ROOT = process.cwd();
 
 // shipped.md mirror lives under the consumer's CWD; let them point elsewhere
-// via env. Default = .loom/shipped.md so it doesn't collide with the consumer's
+// via env. Default = .swrm/shipped.md so it doesn't collide with the consumer's
 // own tasks/ directory.
 if (!process.env.PM_SHIPPED_MD_PATH) {
-  process.env.PM_SHIPPED_MD_PATH = path.join(ROOT, '.loom', 'shipped.md');
+  process.env.PM_SHIPPED_MD_PATH = path.join(ROOT, '.swrm', 'shipped.md');
 }
 
 function bootBanner(dbVersion: number, taskCount: number): void {
   // eslint-disable-next-line no-console
-  console.log(`[loom] http://localhost:${PORT} · DB v${dbVersion} · ${taskCount} task${taskCount === 1 ? '' : 's'}`);
+  console.log(`[swrm] http://localhost:${PORT} · DB v${dbVersion} · ${taskCount} task${taskCount === 1 ? '' : 's'}`);
 }
 
 async function main(): Promise<void> {
@@ -59,14 +59,14 @@ async function main(): Promise<void> {
   const migrate = runPendingMigrations(db);
   if (migrate.applied.length > 0) {
     // eslint-disable-next-line no-console
-    console.log(`[loom] applied ${migrate.applied.length} migration(s)`);
+    console.log(`[swrm] applied ${migrate.applied.length} migration(s)`);
   }
 
   // 2. seed-if-empty
   const seed = seedDefaults(db);
   if (!seed.skipped) {
     // eslint-disable-next-line no-console
-    console.log(`[loom] seeded ${seed.boards_inserted} board(s) + ${seed.labels_inserted} label(s)`);
+    console.log(`[swrm] seeded ${seed.boards_inserted} board(s) + ${seed.labels_inserted} label(s)`);
   }
 
   // 3. orphan-worktree GC. Run once per distinct repo_root so each repo
@@ -85,11 +85,11 @@ async function main(): Promise<void> {
     }
     if (totalRemoved > 0) {
       // eslint-disable-next-line no-console
-      console.log(`[loom] gc removed ${totalRemoved} orphan worktree(s) across ${repos.size} repo(s)`);
+      console.log(`[swrm] gc removed ${totalRemoved} orphan worktree(s) across ${repos.size} repo(s)`);
     }
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.warn('[loom] gc skipped:', (err as Error).message);
+    console.warn('[swrm] gc skipped:', (err as Error).message);
   }
 
   // 3b. markdown ↔ SQLite reconcile (non-fatal on parse error)
@@ -101,11 +101,11 @@ async function main(): Promise<void> {
     ]);
     if (sync.inserted > 0 || sync.archived > 0) {
       // eslint-disable-next-line no-console
-      console.log(`[loom] sync-md inserted ${sync.inserted} · archived ${sync.archived} · unchanged ${sync.unchanged}`);
+      console.log(`[swrm] sync-md inserted ${sync.inserted} · archived ${sync.archived} · unchanged ${sync.unchanged}`);
     }
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.warn('[loom] sync-md skipped:', (err as Error).message);
+    console.warn('[swrm] sync-md skipped:', (err as Error).message);
   }
 
   // 4. count tasks for the boot banner
@@ -146,11 +146,11 @@ async function main(): Promise<void> {
   server.on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {
       // eslint-disable-next-line no-console
-      console.error(`[loom] port ${PORT} already in use — another dashboard running? Try: lsof -ti:${PORT} | xargs kill`);
+      console.error(`[swrm] port ${PORT} already in use — another dashboard running? Try: lsof -ti:${PORT} | xargs kill`);
       process.exit(1);
     }
     // eslint-disable-next-line no-console
-    console.error('[loom] server error:', err);
+    console.error('[swrm] server error:', err);
     process.exit(1);
   });
 
@@ -161,6 +161,6 @@ async function main(): Promise<void> {
 
 main().catch((err) => {
   // eslint-disable-next-line no-console
-  console.error('[loom] fatal:', err);
+  console.error('[swrm] fatal:', err);
   process.exit(1);
 });

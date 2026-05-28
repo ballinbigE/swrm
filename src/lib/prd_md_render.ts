@@ -1,4 +1,4 @@
-// loom/lib/prd_md_render.ts — render a parsed PRD into human-readable
+// swrm/lib/prd_md_render.ts — render a parsed PRD into human-readable
 // markdown. Pure function (no IO), so it's trivially unit-testable and
 // reusable both for the prd-<slug>.md file write and any future preview UI.
 //

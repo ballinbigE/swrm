@@ -33,7 +33,7 @@ export interface Prd {
 export interface PlanFromIdeaOpts {
   /** Override model (default: env PM_PLAN_MODEL or claude-sonnet-4-6). */
   model?: string;
-  /** Override project name (default: 'loom'). */
+  /** Override project name (default: 'swrm'). */
   project?: string;
   /** Override branch name (default: 'main'). */
   branchName?: string;
@@ -129,7 +129,7 @@ export async function planFromIdea(idea: string, opts: PlanFromIdeaOpts = {}): P
 
   const fetchImpl = opts.fetchImpl ?? globalThis.fetch;
   const model = opts.model ?? process.env.PM_PLAN_MODEL ?? 'claude-sonnet-4-6';
-  const project = opts.project ?? 'loom';
+  const project = opts.project ?? 'swrm';
   const branchName = opts.branchName ?? 'main';
   const idPrefix = opts.idPrefix ?? 'US-PLAN';
 
@@ -177,7 +177,7 @@ function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50);
 }
 
-// CLI: `loom plan --idea "..." --out prd-foo.json`
+// CLI: `swrm plan --idea "..." --out prd-foo.json`
 export async function runPlanCli(): Promise<void> {
   const argv = process.argv.slice(2);
   const arg = (name: string): string | undefined => {
@@ -188,7 +188,7 @@ export async function runPlanCli(): Promise<void> {
   const out = arg('out');
   if (!idea) {
     // eslint-disable-next-line no-console
-    console.error('usage: loom plan --idea "<text>" [--out prd-<slug>.json]');
+    console.error('usage: swrm plan --idea "<text>" [--out prd-<slug>.json]');
     process.exit(1);
   }
   try {
@@ -196,10 +196,10 @@ export async function runPlanCli(): Promise<void> {
     const filename = out ?? `prd-${slugify(prd.userStories[0]?.title ?? 'plan')}.json`;
     fs.writeFileSync(path.resolve(filename), JSON.stringify(prd, null, 2) + '\n');
     // eslint-disable-next-line no-console
-    console.log(`[loom plan] ${prd.userStories.length} stories → ${filename}`);
+    console.log(`[swrm plan] ${prd.userStories.length} stories → ${filename}`);
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error(`[loom plan] ${(err as Error).message}`);
+    console.error(`[swrm plan] ${(err as Error).message}`);
     process.exit(1);
   }
 }

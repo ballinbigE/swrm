@@ -1,4 +1,4 @@
-// loom/api/plan_execute.ts — POST /api/plan/execute.
+// swrm/api/plan_execute.ts — POST /api/plan/execute.
 //
 // One-shot: idea → PRD (Anthropic) → write prd-<slug>.json + prd-<slug>.md
 // → INSERT each user story as a `tasks` row → optionally spawn an attempt
@@ -203,7 +203,7 @@ export async function planExecuteHandler(
     if (err instanceof MissingApiKeyError) {
       sendJson(res, 503, {
         error: err.message,
-        hint: 'export ANTHROPIC_API_KEY before booting the loom dashboard',
+        hint: 'export ANTHROPIC_API_KEY before booting the swrm dashboard',
       });
       return true;
     }

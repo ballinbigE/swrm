@@ -45,12 +45,12 @@ export async function startMcpServer(): Promise<void> {
   });
 
   // Ready banner to stderr (stdout is reserved for JSON-RPC frames).
-  process.stderr.write(`[loom-mcp] ready (db=${process.env.LOOM_DB_PATH ?? process.env.PM_DB_PATH ?? '.loom/loom.db'})\n`);
+  process.stderr.write(`[swrm-mcp] ready (db=${process.env.SWRM_DB_PATH ?? process.env.PM_DB_PATH ?? '.swrm/swrm.db'})\n`);
 }
 
 if (require.main === module) {
   startMcpServer().catch((err) => {
-    process.stderr.write(`[loom-mcp] fatal: ${err instanceof Error ? err.message : String(err)}\n`);
+    process.stderr.write(`[swrm-mcp] fatal: ${err instanceof Error ? err.message : String(err)}\n`);
     process.exit(1);
   });
 }

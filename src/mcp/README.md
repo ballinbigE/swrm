@@ -1,4 +1,4 @@
-# Loom MCP server
+# Swrm MCP server
 
 Hand-rolled JSON-RPC stdio MCP server exposing the PM kanban (tasks,
 boards, attempts, comments) to any MCP client. Registered project-wide
@@ -7,17 +7,17 @@ start.
 
 ## Tools (`tools/list`)
 
-- `loom__list_boards`       — list all boards
-- `loom__list_tasks`        — filter by board / status / epic_id
-- `loom__get_task`          — single task with labels + subtasks
-- `loom__create_task`       — defaults to board=personal, status=backlog
-- `loom__update_task`       — patch allowlisted fields
-- `loom__list_epics`        — filter by board / status
-- `loom__suggestions_today` — top 10 urgent tasks (status × priority × due)
-- `loom__list_attempts`     — list attempts for a task
-- `loom__create_attempt`    — spawn worktree + branch; optional `auto_run`
-- `loom__update_attempt`    — patch status/summary/head_sha/refresh_diff
-- `loom__delete_attempt`    — removes worktree + branch + row
+- `swrm__list_boards`       — list all boards
+- `swrm__list_tasks`        — filter by board / status / epic_id
+- `swrm__get_task`          — single task with labels + subtasks
+- `swrm__create_task`       — defaults to board=personal, status=backlog
+- `swrm__update_task`       — patch allowlisted fields
+- `swrm__list_epics`        — filter by board / status
+- `swrm__suggestions_today` — top 10 urgent tasks (status × priority × due)
+- `swrm__list_attempts`     — list attempts for a task
+- `swrm__create_attempt`    — spawn worktree + branch; optional `auto_run`
+- `swrm__update_attempt`    — patch status/summary/head_sha/refresh_diff
+- `swrm__delete_attempt`    — removes worktree + branch + row
 
 ## Verifying the server stand-alone
 
@@ -29,7 +29,7 @@ npm run pm:mcp:smoke
 npm run pm:mcp
 {"jsonrpc":"2.0","id":1,"method":"initialize"}
 {"jsonrpc":"2.0","id":2,"method":"tools/list"}
-{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"loom__list_boards","arguments":{}}}
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"swrm__list_boards","arguments":{}}}
 ^D
 ```
 

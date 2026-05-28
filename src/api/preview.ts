@@ -1,4 +1,4 @@
-// loom/src/api/preview.ts — GET /api/preview/:taskId
+// swrm/src/api/preview.ts — GET /api/preview/:taskId
 // Iterates registered PreviewPlugin instances, first match wins, returns
 // 404 if none. Core knows nothing about iOS / web / Storybook — those are
 // plugin concerns.
@@ -68,7 +68,7 @@ export async function previewHandler(
     });
     res.end(JSON.stringify({
       error: 'no preview plugin matched',
-      hint: 'install a plugin (e.g. @loom/preview-ios) + add it to .loomrc.json',
+      hint: 'install a plugin (e.g. @swrm/preview-ios) + add it to .swrmrc.json',
     }));
     return true;
   }

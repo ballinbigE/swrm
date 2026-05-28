@@ -1,20 +1,20 @@
-// loom/db.ts — single SQLite connection. Opens + migrates on first call.
+// swrm/db.ts — single SQLite connection. Opens + migrates on first call.
 //
 // Why better-sqlite3: synchronous API (no async ceremony for tiny localhost
 // query volume), zero-config, single-file persistence, well-maintained.
-// Only runtime dependency loom ships.
+// Only runtime dependency swrm ships.
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import Database from 'better-sqlite3';
 
-// Loom default: .loom/loom.db under the consumer's CWD. Override via
-// LOOM_DB_PATH (preferred) or PM_DB_PATH (legacy env kept for compat).
+// Swrm default: .swrm/swrm.db under the consumer's CWD. Override via
+// SWRM_DB_PATH (preferred) or PM_DB_PATH (legacy env kept for compat).
 const DB_PATH =
-  process.env.LOOM_DB_PATH ??
+  process.env.SWRM_DB_PATH ??
   process.env.PM_DB_PATH ??
-  path.join(process.cwd(), '.loom', 'loom.db');
+  path.join(process.cwd(), '.swrm', 'swrm.db');
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 
 let cachedDb: Database.Database | null = null;

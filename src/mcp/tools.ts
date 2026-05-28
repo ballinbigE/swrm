@@ -1,4 +1,4 @@
-// scripts/pm/mcp/tools.ts — loom__* MCP tool definitions + handlers.
+// scripts/pm/mcp/tools.ts — swrm__* MCP tool definitions + handlers.
 //
 // Each tool is callable via `tools/call` on the MCP server. The shape of
 // `inputSchema` follows JSON Schema draft 7 — Claude Code uses it to
@@ -268,13 +268,13 @@ function suggestionsToday(_args: Record<string, unknown>, db: Database.Database)
 
 export const TOOLS: ToolDef[] = [
   {
-    name: 'loom__list_boards',
+    name: 'swrm__list_boards',
     description: 'List all kanban boards (slug, name, color).',
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     handler: listBoards,
   },
   {
-    name: 'loom__list_tasks',
+    name: 'swrm__list_tasks',
     description: 'List tasks. Filter by board slug, status, or epic_id. Defaults to non-archived, limit 100.',
     inputSchema: {
       type: 'object',
@@ -290,7 +290,7 @@ export const TOOLS: ToolDef[] = [
     handler: listTasks,
   },
   {
-    name: 'loom__get_task',
+    name: 'swrm__get_task',
     description: 'Fetch a single task by id, including its labels and subtasks.',
     inputSchema: {
       type: 'object',
@@ -301,7 +301,7 @@ export const TOOLS: ToolDef[] = [
     handler: getTask,
   },
   {
-    name: 'loom__create_task',
+    name: 'swrm__create_task',
     description: 'Create a new task. Defaults: board=personal, status=backlog.',
     inputSchema: {
       type: 'object',
@@ -321,7 +321,7 @@ export const TOOLS: ToolDef[] = [
     handler: createTask,
   },
   {
-    name: 'loom__update_task',
+    name: 'swrm__update_task',
     description: 'Patch a task by id. Allowed fields: title, description, status, priority, effort_hours, due_date, blockers, epic_id, position.',
     inputSchema: {
       type: 'object',
@@ -335,7 +335,7 @@ export const TOOLS: ToolDef[] = [
     handler: updateTask,
   },
   {
-    name: 'loom__list_epics',
+    name: 'swrm__list_epics',
     description: 'List epics. Filter by board slug or status.',
     inputSchema: {
       type: 'object',
@@ -348,13 +348,13 @@ export const TOOLS: ToolDef[] = [
     handler: listEpics,
   },
   {
-    name: 'loom__suggestions_today',
+    name: 'swrm__suggestions_today',
     description: 'Top 10 urgent tasks scored by status × priority × due-date proximity. Mirrors /api/suggestions/today.',
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     handler: suggestionsToday,
   },
   {
-    name: 'loom__list_attempts',
+    name: 'swrm__list_attempts',
     description: 'List all attempts (agent runs in git worktrees) for a task, ordered by attempt_number.',
     inputSchema: {
       type: 'object',
@@ -365,7 +365,7 @@ export const TOOLS: ToolDef[] = [
     handler: listAttemptsTool,
   },
   {
-    name: 'loom__create_attempt',
+    name: 'swrm__create_attempt',
     description: 'Spawn a new attempt: creates a fresh git worktree in repo_root on a new branch (attempt/task-<id>-<n>) off base_ref (default main). When auto_run=true, immediately forks the configured agent binary (claude/codex/gemini) in the worktree + streams its stdout into chat_messages. Multi-repo: pass repo_root to spawn against a project other than this one. Returns the attempt row.',
     inputSchema: {
       type: 'object',
@@ -387,7 +387,7 @@ export const TOOLS: ToolDef[] = [
     handler: createAttemptTool,
   },
   {
-    name: 'loom__update_attempt',
+    name: 'swrm__update_attempt',
     description: 'Patch an attempt. patch.refresh_diff=true recomputes diff_stats + head_sha from the worktree.',
     inputSchema: {
       type: 'object',
@@ -410,7 +410,7 @@ export const TOOLS: ToolDef[] = [
     handler: updateAttemptTool,
   },
   {
-    name: 'loom__delete_attempt',
+    name: 'swrm__delete_attempt',
     description: 'Remove an attempt: deletes the worktree, deletes the branch, deletes the row. Idempotent on missing worktree.',
     inputSchema: {
       type: 'object',

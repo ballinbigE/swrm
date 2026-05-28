@@ -5,7 +5,7 @@ import { renderPrdMd } from '../prd_md_render';
 
 function basePrd(): Prd {
   return {
-    project: 'loom',
+    project: 'swrm',
     branchName: 'main',
     description: 'A demo feature broken into stories.',
     userStories: [
@@ -40,7 +40,7 @@ describe('renderPrdMd', () => {
   it('falls back to project name when there are no stories', () => {
     const prd = { ...basePrd(), userStories: [] };
     const md = renderPrdMd(prd);
-    expect(md.startsWith('# loom\n')).toBe(true);
+    expect(md.startsWith('# swrm\n')).toBe(true);
   });
 
   it('includes the top-level description', () => {

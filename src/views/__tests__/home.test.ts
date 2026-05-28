@@ -61,7 +61,7 @@ describe('renderHomeHtml', () => {
     const html = renderHomeHtml({ hasApiKey: true });
     expect(html.startsWith('<!doctype html>')).toBe(true);
     expect(html.trimEnd().endsWith('</body></html>')).toBe(true);
-    expect(html).toContain('<title>Loom — describe what you want to build</title>');
+    expect(html).toContain('<title>Swrm — describe what you want to build</title>');
     // exactly one opening <script> tag (the inline behaviour block)
     expect((html.match(/<script>/g) || []).length).toBe(1);
   });

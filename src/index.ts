@@ -1,6 +1,6 @@
-// loom — public package exports for programmatic use.
+// swrm — public package exports for programmatic use.
 //
-// Most users hit the CLI (`npx loom`); these exports are for embedders + for
+// Most users hit the CLI (`npx swrm`); these exports are for embedders + for
 // plugin authors who want to write a `PreviewPlugin` against typed contracts.
 
 export { getDb, runPendingMigrations } from './db';

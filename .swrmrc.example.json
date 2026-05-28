@@ -1,9 +1,9 @@
 {
   "port": 5173,
-  "dbPath": ".loom/loom.db",
+  "dbPath": ".swrm/swrm.db",
   "worktreeRoot": null,
   "plugins": [
-    "@loom/preview-ios"
+    "@swrm/preview-ios"
   ],
   "agentBinaries": {
     "claude-code": "claude",

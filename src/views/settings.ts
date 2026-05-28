@@ -1,4 +1,4 @@
-// loom/src/views/settings.ts — GET /settings
+// swrm/src/views/settings.ts — GET /settings
 // Preferences area: per-board color + workflow (column set + order).
 // Deliberately minimal — a color swatch and a checkbox-ordered status
 // list per board. No global theme, no font/layout knobs.
@@ -102,9 +102,9 @@ export function renderSettingsHtml(boards: BoardRow[]): string {
     .join('');
 
   return `<!doctype html><html lang="en"><head>
-<meta charset="utf-8" /><title>settings · Loom</title><style>${CSS}</style></head><body>
+<meta charset="utf-8" /><title>settings · Swrm</title><style>${CSS}</style></head><body>
 <header class="topbar">
-  <div class="brand">Loom <span class="slash">/</span> <span class="title">settings</span></div>
+  <div class="brand">Swrm <span class="slash">/</span> <span class="title">settings</span></div>
   <div class="spacer"></div>
   <a href="/">home</a><a href="/tasks">tasks</a><a href="/board">board</a>
 </header>

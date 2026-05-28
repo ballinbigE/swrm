@@ -1,20 +1,20 @@
-# @loom/preview-ios
+# @swrm/preview-ios
 
-iOS Simulator screenshot preview plugin for [loom](https://github.com/ballinbigE/loom).
+iOS Simulator screenshot preview plugin for [swrm](https://github.com/ballinbigE/swrm).
 
 Captures the booted iPhone simulator's screen via `xcrun simctl io booted screenshot` and serves it to the workspace right pane. macOS + Xcode required.
 
 ## Install
 
 ```sh
-npm install @loom/preview-ios
+npm install @swrm/preview-ios
 ```
 
-Then add to your `.loomrc.json`:
+Then add to your `.swrmrc.json`:
 
 ```json
 {
-  "plugins": ["@loom/preview-ios"]
+  "plugins": ["@swrm/preview-ios"]
 }
 ```
 

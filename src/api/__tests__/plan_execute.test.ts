@@ -51,7 +51,7 @@ function makeDb(): Database.Database {
 
 function fakePrd(): Prd {
   return {
-    project: 'loom',
+    project: 'swrm',
     branchName: 'main',
     description: 'Build the thing.',
     userStories: [

@@ -20,7 +20,7 @@ describe('mcp/server.ts (real subprocess)', () => {
   afterEach(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
 
   function spawnServer() {
-    // loom: __dirname = src/mcp/__tests__ → repo root is 3 levels up.
+    // swrm: __dirname = src/mcp/__tests__ → repo root is 3 levels up.
     const repoRoot = path.resolve(__dirname, '..', '..', '..');
     return spawn(
       'npx',
@@ -45,7 +45,7 @@ describe('mcp/server.ts (real subprocess)', () => {
 
     // Wait for the 'ready' banner on stderr before sending requests.
     const waitForReady = setInterval(() => {
-      if (stderr.includes('[loom-mcp] ready')) {
+      if (stderr.includes('[swrm-mcp] ready')) {
         clearInterval(waitForReady);
         child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize' }) + '\n');
         child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list' }) + '\n');
@@ -67,14 +67,14 @@ describe('mcp/server.ts (real subprocess)', () => {
 
         const init = JSON.parse(lines[0]);
         expect(init.id).toBe(1);
-        expect(init.result.serverInfo.name).toBe('loom');
+        expect(init.result.serverInfo.name).toBe('swrm');
 
         const tools = JSON.parse(lines[1]);
         expect(tools.id).toBe(2);
         expect(Array.isArray(tools.result.tools)).toBe(true);
         const names = tools.result.tools.map((t: { name: string }) => t.name);
-        expect(names).toContain('loom__list_boards');
-        expect(names).toContain('loom__create_attempt');
+        expect(names).toContain('swrm__list_boards');
+        expect(names).toContain('swrm__create_attempt');
         done();
       } catch (e) {
         done(e);

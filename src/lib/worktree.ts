@@ -18,11 +18,11 @@ const execFileAsync = promisify(execFile);
 
 // Default worktree root — read at call time so tests can override via
 // process.env.PM_WORKTREE_ROOT in beforeEach. macOS wipes /tmp on reboot
-// so we live under ~/Library/Application Support/loom/worktrees so
+// so we live under ~/Library/Application Support/swrm/worktrees so
 // in-flight attempts survive a restart. Env var still wins.
 function worktreeRoot(): string {
   if (process.env.PM_WORKTREE_ROOT) return process.env.PM_WORKTREE_ROOT;
-  return path.join(os.homedir(), 'Library', 'Application Support', 'loom', 'worktrees');
+  return path.join(os.homedir(), 'Library', 'Application Support', 'swrm', 'worktrees');
 }
 
 // Branch names: lowercase alphanum + - + _ + / only. Forbids shell

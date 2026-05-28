@@ -27,24 +27,24 @@ describe('dispatch: initialize', () => {
     const resp = await dispatch({ jsonrpc: '2.0', id: 1, method: 'initialize' }, db);
     expect(resp).not.toBeNull();
     expect(resp!.id).toBe(1);
-    expect((resp!.result as { serverInfo: { name: string } }).serverInfo.name).toBe('loom');
+    expect((resp!.result as { serverInfo: { name: string } }).serverInfo.name).toBe('swrm');
     expect((resp!.result as { capabilities: { tools: object } }).capabilities.tools).toEqual({});
   });
 });
 
 describe('dispatch: tools/list', () => {
-  it('enumerates the loom__* tools', async () => {
+  it('enumerates the swrm__* tools', async () => {
     const db = makeDb();
     const resp = await dispatch({ jsonrpc: '2.0', id: 2, method: 'tools/list' }, db);
     const tools = (resp!.result as { tools: Array<{ name: string }> }).tools;
     const names = tools.map((t) => t.name);
-    expect(names).toContain('loom__list_boards');
-    expect(names).toContain('loom__list_tasks');
-    expect(names).toContain('loom__create_task');
-    expect(names).toContain('loom__update_task');
-    expect(names).toContain('loom__get_task');
-    expect(names).toContain('loom__list_epics');
-    expect(names).toContain('loom__suggestions_today');
+    expect(names).toContain('swrm__list_boards');
+    expect(names).toContain('swrm__list_tasks');
+    expect(names).toContain('swrm__create_task');
+    expect(names).toContain('swrm__update_task');
+    expect(names).toContain('swrm__get_task');
+    expect(names).toContain('swrm__list_epics');
+    expect(names).toContain('swrm__suggestions_today');
   });
 
   it('every tool has name, description, inputSchema', async () => {
@@ -59,11 +59,11 @@ describe('dispatch: tools/list', () => {
   });
 });
 
-describe('dispatch: tools/call loom__list_boards', () => {
+describe('dispatch: tools/call swrm__list_boards', () => {
   it('returns seeded boards', async () => {
     const db = makeDb();
     const resp = await dispatch(
-      { jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name: 'loom__list_boards', arguments: {} } },
+      { jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name: 'swrm__list_boards', arguments: {} } },
       db,
     );
     const result = resp!.result as { content: Array<{ text: string }>; isError: boolean };
@@ -73,7 +73,7 @@ describe('dispatch: tools/call loom__list_boards', () => {
   });
 });
 
-describe('dispatch: tools/call loom__create_task', () => {
+describe('dispatch: tools/call swrm__create_task', () => {
   it('creates and returns the task', async () => {
     const db = makeDb();
     const resp = await dispatch(
@@ -82,7 +82,7 @@ describe('dispatch: tools/call loom__create_task', () => {
         id: 5,
         method: 'tools/call',
         params: {
-          name: 'loom__create_task',
+          name: 'swrm__create_task',
           arguments: { title: 'Wire MCP', priority: 'high', board: 'personal' },
         },
       },
@@ -103,7 +103,7 @@ describe('dispatch: tools/call loom__create_task', () => {
         jsonrpc: '2.0',
         id: 6,
         method: 'tools/call',
-        params: { name: 'loom__create_task', arguments: { title: 'x', board: 'nope' } },
+        params: { name: 'swrm__create_task', arguments: { title: 'x', board: 'nope' } },
       },
       db,
     );
@@ -115,7 +115,7 @@ describe('dispatch: tools/call loom__create_task', () => {
   it('refuses missing title', async () => {
     const db = makeDb();
     const resp = await dispatch(
-      { jsonrpc: '2.0', id: 7, method: 'tools/call', params: { name: 'loom__create_task', arguments: {} } },
+      { jsonrpc: '2.0', id: 7, method: 'tools/call', params: { name: 'swrm__create_task', arguments: {} } },
       db,
     );
     expect((resp!.result as { isError: boolean }).isError).toBe(true);
@@ -128,7 +128,7 @@ describe('dispatch: tools/call loom__create_task', () => {
         jsonrpc: '2.0',
         id: 8,
         method: 'tools/call',
-        params: { name: 'loom__create_task', arguments: { title: 't', status: 'banana' } },
+        params: { name: 'swrm__create_task', arguments: { title: 't', status: 'banana' } },
       },
       db,
     );
@@ -138,7 +138,7 @@ describe('dispatch: tools/call loom__create_task', () => {
   });
 });
 
-describe('dispatch: tools/call loom__update_task', () => {
+describe('dispatch: tools/call swrm__update_task', () => {
   it('patches allowed fields', async () => {
     const db = makeDb();
     await dispatch(
@@ -146,7 +146,7 @@ describe('dispatch: tools/call loom__update_task', () => {
         jsonrpc: '2.0',
         id: 9,
         method: 'tools/call',
-        params: { name: 'loom__create_task', arguments: { title: 'x' } },
+        params: { name: 'swrm__create_task', arguments: { title: 'x' } },
       },
       db,
     );
@@ -156,7 +156,7 @@ describe('dispatch: tools/call loom__update_task', () => {
         id: 10,
         method: 'tools/call',
         params: {
-          name: 'loom__update_task',
+          name: 'swrm__update_task',
           arguments: { id: 1, patch: { status: 'in_progress', priority: 'high' } },
         },
       },
@@ -176,7 +176,7 @@ describe('dispatch: tools/call loom__update_task', () => {
         jsonrpc: '2.0',
         id: 11,
         method: 'tools/call',
-        params: { name: 'loom__create_task', arguments: { title: 'x' } },
+        params: { name: 'swrm__create_task', arguments: { title: 'x' } },
       },
       db,
     );
@@ -186,7 +186,7 @@ describe('dispatch: tools/call loom__update_task', () => {
         id: 12,
         method: 'tools/call',
         params: {
-          name: 'loom__update_task',
+          name: 'swrm__update_task',
           arguments: { id: 1, patch: { archived_at: '2026-01-01' } },
         },
       },
@@ -204,7 +204,7 @@ describe('dispatch: tools/call loom__update_task', () => {
         jsonrpc: '2.0',
         id: 13,
         method: 'tools/call',
-        params: { name: 'loom__create_task', arguments: { title: 'x' } },
+        params: { name: 'swrm__create_task', arguments: { title: 'x' } },
       },
       db,
     );
@@ -213,7 +213,7 @@ describe('dispatch: tools/call loom__update_task', () => {
         jsonrpc: '2.0',
         id: 14,
         method: 'tools/call',
-        params: { name: 'loom__update_task', arguments: { id: 1, patch: {} } },
+        params: { name: 'swrm__update_task', arguments: { id: 1, patch: {} } },
       },
       db,
     );
@@ -221,7 +221,7 @@ describe('dispatch: tools/call loom__update_task', () => {
   });
 });
 
-describe('dispatch: tools/call loom__list_tasks', () => {
+describe('dispatch: tools/call swrm__list_tasks', () => {
   it('filters by status', async () => {
     const db = makeDb();
     for (const status of ['backlog', 'todo', 'in_progress']) {
@@ -230,7 +230,7 @@ describe('dispatch: tools/call loom__list_tasks', () => {
           jsonrpc: '2.0',
           id: 20,
           method: 'tools/call',
-          params: { name: 'loom__create_task', arguments: { title: `t-${status}`, status } },
+          params: { name: 'swrm__create_task', arguments: { title: `t-${status}`, status } },
         },
         db,
       );
@@ -240,7 +240,7 @@ describe('dispatch: tools/call loom__list_tasks', () => {
         jsonrpc: '2.0',
         id: 21,
         method: 'tools/call',
-        params: { name: 'loom__list_tasks', arguments: { status: 'todo' } },
+        params: { name: 'swrm__list_tasks', arguments: { status: 'todo' } },
       },
       db,
     );
@@ -258,7 +258,7 @@ describe('dispatch: tools/call loom__list_tasks', () => {
         jsonrpc: '2.0',
         id: 22,
         method: 'tools/call',
-        params: { name: 'loom__create_task', arguments: { title: 'p1', board: 'personal' } },
+        params: { name: 'swrm__create_task', arguments: { title: 'p1', board: 'personal' } },
       },
       db,
     );
@@ -267,7 +267,7 @@ describe('dispatch: tools/call loom__list_tasks', () => {
         jsonrpc: '2.0',
         id: 23,
         method: 'tools/call',
-        params: { name: 'loom__create_task', arguments: { title: 'w1', board: 'work' } },
+        params: { name: 'swrm__create_task', arguments: { title: 'w1', board: 'work' } },
       },
       db,
     );
@@ -276,7 +276,7 @@ describe('dispatch: tools/call loom__list_tasks', () => {
         jsonrpc: '2.0',
         id: 24,
         method: 'tools/call',
-        params: { name: 'loom__list_tasks', arguments: { board: 'work' } },
+        params: { name: 'swrm__list_tasks', arguments: { board: 'work' } },
       },
       db,
     );
@@ -287,7 +287,7 @@ describe('dispatch: tools/call loom__list_tasks', () => {
   });
 });
 
-describe('dispatch: tools/call loom__get_task', () => {
+describe('dispatch: tools/call swrm__get_task', () => {
   it('returns task with labels and subtasks', async () => {
     const db = makeDb();
     await dispatch(
@@ -295,7 +295,7 @@ describe('dispatch: tools/call loom__get_task', () => {
         jsonrpc: '2.0',
         id: 30,
         method: 'tools/call',
-        params: { name: 'loom__create_task', arguments: { title: 'x' } },
+        params: { name: 'swrm__create_task', arguments: { title: 'x' } },
       },
       db,
     );
@@ -308,7 +308,7 @@ describe('dispatch: tools/call loom__get_task', () => {
         jsonrpc: '2.0',
         id: 31,
         method: 'tools/call',
-        params: { name: 'loom__get_task', arguments: { id: 1 } },
+        params: { name: 'swrm__get_task', arguments: { id: 1 } },
       },
       db,
     );
@@ -326,7 +326,7 @@ describe('dispatch: tools/call loom__get_task', () => {
         jsonrpc: '2.0',
         id: 32,
         method: 'tools/call',
-        params: { name: 'loom__get_task', arguments: { id: 999 } },
+        params: { name: 'swrm__get_task', arguments: { id: 999 } },
       },
       db,
     );
@@ -334,7 +334,7 @@ describe('dispatch: tools/call loom__get_task', () => {
   });
 });
 
-describe('dispatch: tools/call loom__suggestions_today', () => {
+describe('dispatch: tools/call swrm__suggestions_today', () => {
   it('ranks in_progress + high priority first', async () => {
     const db = makeDb();
     await dispatch(
@@ -342,7 +342,7 @@ describe('dispatch: tools/call loom__suggestions_today', () => {
         jsonrpc: '2.0',
         id: 40,
         method: 'tools/call',
-        params: { name: 'loom__create_task', arguments: { title: 'low', priority: 'low', status: 'backlog' } },
+        params: { name: 'swrm__create_task', arguments: { title: 'low', priority: 'low', status: 'backlog' } },
       },
       db,
     );
@@ -351,12 +351,12 @@ describe('dispatch: tools/call loom__suggestions_today', () => {
         jsonrpc: '2.0',
         id: 41,
         method: 'tools/call',
-        params: { name: 'loom__create_task', arguments: { title: 'hot', priority: 'high', status: 'in_progress' } },
+        params: { name: 'swrm__create_task', arguments: { title: 'hot', priority: 'high', status: 'in_progress' } },
       },
       db,
     );
     const resp = await dispatch(
-      { jsonrpc: '2.0', id: 42, method: 'tools/call', params: { name: 'loom__suggestions_today', arguments: {} } },
+      { jsonrpc: '2.0', id: 42, method: 'tools/call', params: { name: 'swrm__suggestions_today', arguments: {} } },
       db,
     );
     const rows = JSON.parse(

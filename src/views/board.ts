@@ -1,4 +1,4 @@
-// loom/src/views/board.ts — GET /board
+// swrm/src/views/board.ts — GET /board
 // Status-grouped kanban with drag-to-execute (vibecoderplanner pattern).
 // Drag a card into "In Progress" → PATCH status + spawn an auto-run
 // attempt. Drops to other columns just PATCH the status. /tasks remains
@@ -140,14 +140,14 @@ export function renderBoardHtml(rows: Row[], opts: BoardViewOpts = {}): string {
   }).join('');
 
   return `<!doctype html><html lang="en"><head>
-<meta charset="utf-8" /><title>board · Loom</title><style>${CSS}
+<meta charset="utf-8" /><title>board · Swrm</title><style>${CSS}
 .board { grid-template-columns: repeat(${COLUMNS.length}, 1fr) !important }
 .col.drag-over { border-color: ${accent} }
 .card .title a:hover { color: ${accent} }
 .col-head { border-bottom-color: ${accent}33 }
 </style></head><body>
 <header class="topbar">
-  <div class="brand">Loom <span class="slash">/</span> <span class="title">board</span></div>
+  <div class="brand">Swrm <span class="slash">/</span> <span class="title">board</span></div>
   ${switcher}
   <div class="spacer"></div>
   <a href="/">home</a>

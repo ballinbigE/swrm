@@ -4,15 +4,15 @@ coverage/
 .DS_Store
 
 # Local state — never committed
-.loom/
-.loomrc.local.json
+.swrm/
+.swrmrc.local.json
 *.db
 *.db-shm
 *.db-wal
 
 # Worktree root (when default ~/Library/... is overridden to repo-local for tests)
 /tmp/pm-wt/
-/tmp/loom-wt/
+/tmp/swrm-wt/
 
 # Editor
 .vscode/

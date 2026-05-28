@@ -6,7 +6,7 @@ Single maintainer (Erick Bzovi). Cadence: evenings + weekends, best-effort.
 
 - **Bug reports:** triaged within ~1 week. Critical fixes (data loss, security) faster.
 - **Feature PRs:** small focused ones merged faster; large ones may sit for discussion.
-- **Roadmap items:** tracked in [GitHub Issues](https://github.com/ballinbigE/loom/issues); no SLA on shipping.
+- **Roadmap items:** tracked in [GitHub Issues](https://github.com/ballinbigE/swrm/issues); no SLA on shipping.
 - **Releases:** semver, npm-published on cadence (no fixed schedule; when meaningful changes accumulate).
 
 ## What NOT to expect
@@ -17,7 +17,7 @@ Single maintainer (Erick Bzovi). Cadence: evenings + weekends, best-effort.
 
 ## Sponsoring
 
-Not currently set up. If Loom becomes load-bearing for your team, the most valuable thing you can do is contribute back code or write docs.
+Not currently set up. If Swrm becomes load-bearing for your team, the most valuable thing you can do is contribute back code or write docs.
 
 ## Burnout mitigation
 

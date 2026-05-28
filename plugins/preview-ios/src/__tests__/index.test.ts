@@ -1,4 +1,4 @@
-// Tests for @loom/preview-ios — focuses on the PreviewPlugin contract.
+// Tests for @swrm/preview-ios — focuses on the PreviewPlugin contract.
 // Cache + fallback paths are covered via the public render() method.
 
 import * as fs from 'node:fs';
@@ -16,11 +16,11 @@ function fakeCtx(repoRoot: string) {
   };
 }
 
-describe('@loom/preview-ios PreviewPlugin', () => {
+describe('@swrm/preview-ios PreviewPlugin', () => {
   let tmp: string;
 
   beforeEach(() => {
-    tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'loom-ios-test-'));
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'swrm-ios-test-'));
     _resetSimScreenshotCache();
   });
   afterEach(() => fs.rmSync(tmp, { recursive: true, force: true }));

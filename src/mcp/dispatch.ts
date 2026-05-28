@@ -5,7 +5,7 @@
 // Protocol: https://spec.modelcontextprotocol.io/specification/2024-11-05/
 // We implement only the surface Claude Code actually calls:
 //   initialize          → server capabilities + name + version
-//   tools/list          → enumerate the loom__* tools
+//   tools/list          → enumerate the swrm__* tools
 //   tools/call          → invoke a single tool with arguments
 //
 // All other methods return a -32601 (method-not-found) JSON-RPC error.
@@ -29,7 +29,7 @@ export interface RpcResponse {
 }
 
 const PROTOCOL_VERSION = '2024-11-05';
-const SERVER_NAME = 'loom';
+const SERVER_NAME = 'swrm';
 const SERVER_VERSION = '0.1.0';
 
 export async function dispatch(req: RpcRequest, db: Database.Database): Promise<RpcResponse | null> {
