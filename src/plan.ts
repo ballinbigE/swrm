@@ -33,7 +33,7 @@ export interface Prd {
 export interface PlanFromIdeaOpts {
   /** Override model (default: env PM_PLAN_MODEL or claude-sonnet-4-6). */
   model?: string;
-  /** Override project name (default: 'nugget-expo'). */
+  /** Override project name (default: 'loom'). */
   project?: string;
   /** Override branch name (default: 'main'). */
   branchName?: string;
@@ -129,7 +129,7 @@ export async function planFromIdea(idea: string, opts: PlanFromIdeaOpts = {}): P
 
   const fetchImpl = opts.fetchImpl ?? globalThis.fetch;
   const model = opts.model ?? process.env.PM_PLAN_MODEL ?? 'claude-sonnet-4-6';
-  const project = opts.project ?? 'nugget-expo';
+  const project = opts.project ?? 'loom';
   const branchName = opts.branchName ?? 'main';
   const idPrefix = opts.idPrefix ?? 'US-PLAN';
 

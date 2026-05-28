@@ -5,7 +5,7 @@ export default defineConfig({
     cli: 'src/cli.ts',
     index: 'src/index.ts',
   },
-  format: 'esm',
+  format: 'cjs',
   target: 'node20',
   dts: true,
   clean: true,

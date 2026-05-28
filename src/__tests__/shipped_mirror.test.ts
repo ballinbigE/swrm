@@ -24,7 +24,7 @@ function freshDb(): Database.Database {
 function freshMd(): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-mirror-md-'));
   const file = path.join(dir, 'shipped.md');
-  fs.writeFileSync(file, '# Shipped — nugget-expo\n\nNewest first.\n\n## 2026-05-26 — prior session\n\n### L100 — earlier row\n\n- **Status:** shipped 2026-05-26\n', 'utf8');
+  fs.writeFileSync(file, '# Shipped — demo-project\n\nNewest first.\n\n## 2026-05-26 — prior session\n\n### L100 — earlier row\n\n- **Status:** shipped 2026-05-26\n', 'utf8');
   return file;
 }
 

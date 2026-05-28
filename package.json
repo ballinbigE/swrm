@@ -2,7 +2,6 @@
   "name": "loom",
   "version": "0.1.0",
   "description": "MCP-native kanban for parallel coding agents. Markdown-friendly. Localhost-first.",
-  "type": "module",
   "bin": {
     "loom": "dist/cli.js"
   },
@@ -10,7 +9,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "require": "./dist/index.js"
     }
   },
   "files": [

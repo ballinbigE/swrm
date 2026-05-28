@@ -5,23 +5,19 @@
 // Args:
 //   loom                  → boot http server at $LOOM_PORT (default 5173)
 //   loom mcp              → boot MCP JSON-RPC stdio server
-//   loom plan --idea ...  → AI Project Breakdown CLI (delegates to plan.ts)
+//   loom plan --idea ...  → AI Project Breakdown CLI (delegates to plan)
 //   loom --version        → print version + exit
 //   loom --help           → print usage + exit
-//
-// M4 will replace this minimal parser with a proper config + arg layer.
 
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import * as path from 'node:path';
 
 const argv = process.argv.slice(2);
 const cmd = argv[0];
 
 function readVersion(): string {
   try {
-    const __dirname = dirname(fileURLToPath(import.meta.url));
-    const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')) as { version: string };
+    const pkg = JSON.parse(readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')) as { version: string };
     return pkg.version;
   } catch {
     return '0.0.0';
@@ -49,7 +45,7 @@ DOCS: https://github.com/ballinbigE/loom
 `);
 }
 
-async function main(): Promise<void> {
+function main(): void {
   if (cmd === '--version' || cmd === '-v') {
     // eslint-disable-next-line no-console
     console.log(readVersion());
@@ -60,19 +56,18 @@ async function main(): Promise<void> {
     return;
   }
   if (cmd === 'mcp') {
-    await import('./mcp/server.js');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('./mcp/server');
     return;
   }
   if (cmd === 'plan') {
-    await import('./plan.js');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('./plan');
     return;
   }
   // Default: boot the http server
-  await import('./server.js');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require('./server');
 }
 
-main().catch((err) => {
-  // eslint-disable-next-line no-console
-  console.error('[loom] fatal:', err instanceof Error ? err.message : String(err));
-  process.exit(1);
-});
+main();

@@ -27,7 +27,7 @@ describe('dispatch: initialize', () => {
     const resp = await dispatch({ jsonrpc: '2.0', id: 1, method: 'initialize' }, db);
     expect(resp).not.toBeNull();
     expect(resp!.id).toBe(1);
-    expect((resp!.result as { serverInfo: { name: string } }).serverInfo.name).toBe('nugget-pm');
+    expect((resp!.result as { serverInfo: { name: string } }).serverInfo.name).toBe('loom');
     expect((resp!.result as { capabilities: { tools: object } }).capabilities.tools).toEqual({});
   });
 });

@@ -20,10 +20,11 @@ describe('mcp/server.ts (real subprocess)', () => {
   afterEach(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
 
   function spawnServer() {
-    const repoRoot = path.resolve(__dirname, '..', '..', '..', '..');
+    // loom: __dirname = src/mcp/__tests__ → repo root is 3 levels up.
+    const repoRoot = path.resolve(__dirname, '..', '..', '..');
     return spawn(
       'npx',
-      ['tsx', path.join('scripts', 'pm', 'mcp', 'server.ts')],
+      ['tsx', path.join('src', 'mcp', 'server.ts')],
       {
         cwd: repoRoot,
         env: { ...process.env, PM_DB_PATH: dbPath },
@@ -66,7 +67,7 @@ describe('mcp/server.ts (real subprocess)', () => {
 
         const init = JSON.parse(lines[0]);
         expect(init.id).toBe(1);
-        expect(init.result.serverInfo.name).toBe('nugget-pm');
+        expect(init.result.serverInfo.name).toBe('loom');
 
         const tools = JSON.parse(lines[1]);
         expect(tools.id).toBe(2);

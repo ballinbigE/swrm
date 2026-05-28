@@ -1,7 +1,7 @@
 -- US-VK-R-008 — Multi-repo attempts.
 -- Each attempt remembers which repo it spawned in so the dashboard
 -- becomes a cross-project workbench (claude-skills, fintech-adventures,
--- not only nugget-expo).
+-- not only the primary repo).
 --
 -- Backfill: existing rows pre-VK-R-008 default to the empty string —
 -- callers (mergeAttempt, deleteAttempt) fall back to process.cwd()

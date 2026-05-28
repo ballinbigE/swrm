@@ -1,4 +1,4 @@
-# Nugget PM MCP server
+# Loom MCP server
 
 Hand-rolled JSON-RPC stdio MCP server exposing the PM kanban (tasks,
 boards, attempts, comments) to any MCP client. Registered project-wide

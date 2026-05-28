@@ -29,7 +29,7 @@ import { workspaceStreamHandler } from './api/workspace_stream';
 import { planApiHandler } from './api/plan';
 import { workspaceHandler } from './views/workspace';
 import { tasksListHandler } from './views/tasks_list';
-// Legacy markdown-mirror kanban dropped in loom (was tied to nugget-specific
+// Legacy markdown-mirror kanban dropped in loom (was tied to the original host repo
 // tasks/backlog.md format). The SQLite-backed /tasks view is the canonical
 // kanban now. M5/M8 may re-introduce a generic markdown kanban — TBD.
 

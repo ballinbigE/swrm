@@ -24,7 +24,7 @@ describe('planFromIdea', () => {
     content: [{
       type: 'text',
       text: JSON.stringify({
-        project: 'nugget-expo',
+        project: 'demo-project',
         branchName: 'main',
         description: 'add dark mode',
         userStories: [
@@ -53,7 +53,7 @@ describe('planFromIdea', () => {
 
   it('returns a normalized PRD with at least 1 story', async () => {
     const prd = await planFromIdea('add dark mode', { fetchImpl: mockFetch(validResponse) });
-    expect(prd.project).toBe('nugget-expo');
+    expect(prd.project).toBe('demo-project');
     expect(prd.branchName).toBe('main');
     expect(prd.userStories).toHaveLength(2);
     expect(prd.userStories[0].id).toBe('US-PLAN-A');
