@@ -19,8 +19,55 @@ public final class BoardModel: ObservableObject {
 
     private let bookmarkStore: BookmarkStore
     private let locator = StoriesLocator()
+    private var watcher: FolderWatcher?
+    private var currentStoriesDir: URL?
+    private var scopedURL: URL?
 
     public init(bookmarkStore: BookmarkStore = BookmarkStore()) {
         self.bookmarkStore = bookmarkStore
+    }
+
+    deinit {
+        watcher?.stop()
+        scopedURL?.stopAccessingSecurityScopedResource()
+    }
+
+    /// Open a folder the user picked (persists it for next launch).
+    public func openFolder(_ url: URL) {
+        present(pickedFolder: url, saveBookmark: true)
+    }
+
+    private func present(pickedFolder: URL, saveBookmark: Bool) {
+        // Release any previously-open folder.
+        watcher?.stop(); watcher = nil
+        scopedURL?.stopAccessingSecurityScopedResource(); scopedURL = nil
+
+        // Needed for iOS document-picker URLs; harmless `false` for plain URLs.
+        if pickedFolder.startAccessingSecurityScopedResource() {
+            scopedURL = pickedFolder
+        }
+        if saveBookmark { bookmarkStore.save(pickedFolder) }
+
+        let storiesDir = locator.resolve(pickedFolder: pickedFolder)
+        var isDir: ObjCBool = false
+        let exists = FileManager.default.fileExists(atPath: storiesDir.path, isDirectory: &isDir)
+        guard exists, isDir.boolValue,
+              FileManager.default.isReadableFile(atPath: storiesDir.path) else {
+            state = .error("Couldn't read folder. Re-open it.")
+            return
+        }
+
+        folderName = pickedFolder.lastPathComponent
+        currentStoriesDir = storiesDir
+        state = .loading
+        reload(storiesDir: storiesDir)
+    }
+
+    private func reload(storiesDir: URL) {
+        let stories = (try? StoryStore(directory: storiesDir).load()) ?? []
+        let board = Board(stories: stories)
+        let isEmpty = board.columns.allSatisfy { $0.stories.isEmpty }
+        let next: LoadState = isEmpty ? .empty : .loaded(board)
+        if next != state { state = next }
     }
 }
