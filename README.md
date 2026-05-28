@@ -22,6 +22,15 @@ Layered on top of three convictions:
 
 ## Install
 
+Straight from GitHub (no npm account needed):
+
+```sh
+npx github:ballinbigE/swrm
+# clones, builds, opens http://localhost:5173
+```
+
+Or, once published to npm:
+
 ```sh
 npx swrm
 # opens http://localhost:5173 — daily command is `swrm`
