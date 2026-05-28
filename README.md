@@ -1,6 +1,10 @@
-# Loom
+<p align="center">
+  <img src="./assets/logo-wordmark.svg" alt="Loom" width="280" />
+</p>
 
-> **MCP-native kanban for parallel coding agents. Markdown-friendly. Localhost-first. `npx loom`.**
+<p align="center">
+  <strong>MCP-native kanban for parallel coding agents. Markdown-friendly. Localhost-first. <code>npx loom</code>.</strong>
+</p>
 
 <!-- TODO: 30-second screencast GIF — see docs/screencast-script.md -->
 

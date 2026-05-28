@@ -1,0 +1,29 @@
+<svg width="360" height="120" viewBox="0 0 360 120" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loom">
+  <title>Loom</title>
+  <!-- mark -->
+  <rect x="4" y="4" width="112" height="112" rx="26" fill="#15171c"/>
+  <rect x="4.5" y="4.5" width="111" height="111" rx="25.5" stroke="#2a2e38"/>
+  <g stroke-linecap="round">
+    <line x1="40" y1="30" x2="40" y2="90" stroke="#a8552f" stroke-width="9"/>
+    <line x1="60" y1="30" x2="60" y2="90" stroke="#a8552f" stroke-width="9"/>
+    <line x1="80" y1="30" x2="80" y2="90" stroke="#a8552f" stroke-width="9"/>
+    <line x1="30" y1="42" x2="90" y2="42" stroke="#d97757" stroke-width="9"/>
+    <line x1="30" y1="60" x2="90" y2="60" stroke="#e89070" stroke-width="9"/>
+    <line x1="30" y1="78" x2="90" y2="78" stroke="#d97757" stroke-width="9"/>
+    <line x1="40" y1="30" x2="40" y2="37" stroke="#c2693c" stroke-width="9"/>
+    <line x1="60" y1="30" x2="60" y2="37" stroke="#c2693c" stroke-width="9"/>
+    <line x1="80" y1="30" x2="80" y2="37" stroke="#c2693c" stroke-width="9"/>
+    <line x1="40" y1="48" x2="40" y2="54" stroke="#c2693c" stroke-width="9"/>
+    <line x1="60" y1="48" x2="60" y2="54" stroke="#c2693c" stroke-width="9"/>
+    <line x1="80" y1="48" x2="80" y2="54" stroke="#c2693c" stroke-width="9"/>
+    <line x1="40" y1="66" x2="40" y2="72" stroke="#c2693c" stroke-width="9"/>
+    <line x1="60" y1="66" x2="60" y2="72" stroke="#c2693c" stroke-width="9"/>
+    <line x1="80" y1="66" x2="80" y2="72" stroke="#c2693c" stroke-width="9"/>
+    <line x1="40" y1="83" x2="40" y2="90" stroke="#c2693c" stroke-width="9"/>
+    <line x1="60" y1="83" x2="60" y2="90" stroke="#c2693c" stroke-width="9"/>
+    <line x1="80" y1="83" x2="80" y2="90" stroke="#c2693c" stroke-width="9"/>
+  </g>
+  <!-- wordmark -->
+  <text x="138" y="76" font-family="ui-rounded, -apple-system, system-ui, sans-serif"
+        font-size="58" font-weight="700" letter-spacing="-1" fill="#e8e6e3">loom</text>
+</svg>
