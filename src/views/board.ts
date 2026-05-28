@@ -22,6 +22,24 @@ function esc(s: string | number | null | undefined): string {
     .replace(/'/g, '&#39;');
 }
 
+/**
+ * Parse the pipe-joined "name:color" pairs from loadTaskList's `labels_raw`
+ * into chip data. Splits each fragment on the LAST colon so label names may
+ * themselves contain colons; fragments without a valid #hex color are skipped.
+ */
+export function parseLabels(raw: string | null | undefined): { name: string; color: string }[] {
+  if (!raw) return [];
+  const out: { name: string; color: string }[] = [];
+  for (const frag of raw.split('|')) {
+    const i = frag.lastIndexOf(':');
+    if (i <= 0) continue;
+    const name = frag.slice(0, i).trim();
+    const color = frag.slice(i + 1).trim();
+    if (name && /^#[0-9a-fA-F]{3,8}$/.test(color)) out.push({ name, color });
+  }
+  return out;
+}
+
 const STATUS_LABELS: Record<string, string> = {
   backlog: 'Backlog',
   todo: 'Todo',
@@ -56,15 +74,24 @@ body { margin: 0; font: 13px/1.45 -apple-system, system-ui, sans-serif; color: #
 .card { background: #15181f; border: 1px solid #232730; border-radius: 6px; padding: 9px 10px; cursor: grab }
 .card:active { cursor: grabbing }
 .card.dragging { opacity: 0.4 }
+/* Priority reads at a glance from the left stripe — distinct hues, no green
+   (green is reserved for the done column / success states elsewhere). */
+.card.card-pri-high { border-left: 3px solid #ef5350 }
+.card.card-pri-medium { border-left: 3px solid #fb923c }
+.card.card-pri-low { border-left: 3px solid #3a3f4b }
 .card .id { color: #4a4f5b; font-size: 10px }
 .card .title { color: #e8e6e3; font-size: 13px; margin: 2px 0 4px }
 .card .title a { color: inherit; text-decoration: none }
 .card .title a:hover { color: #d97757 }
+.card .labels { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 4px }
 .card .meta { display: flex; gap: 6px; flex-wrap: wrap }
+.label-chip { font-size: 10px; padding: 1px 6px; border-radius: 3px; border: 1px solid;
+              background: transparent; font-weight: 500 }
 .badge { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: #2a2e38; color: #c8ccd6 }
 .badge.open { background: #5a3a1e; color: #fbbf24 }
 .badge.pri-high { background: #391a1a; color: #fca5a5 }
-.badge.pri-medium { background: #5a3a1e; color: #fbbf24 }
+/* orange, not the #fbbf24 yellow the open-comment badge uses — they collided */
+.badge.pri-medium { background: #4a2f12; color: #fb923c }
 .badge.pri-low { background: #2a2e38; color: #8b8f9b }
 .empty { color: #4a4f5b; font-size: 11px; text-align: center; padding: 16px 8px; font-style: italic }
 #toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 14px; border-radius: 6px; font-size: 12px; z-index: 200; box-shadow: 0 6px 20px rgba(0,0,0,0.4) }
@@ -83,6 +110,7 @@ interface Row {
   priority: string | null;
   attempt_count: number;
   open_comment_count: number;
+  labels_raw?: string | null;
 }
 
 export interface BoardViewOpts {
@@ -125,9 +153,14 @@ export function renderBoardHtml(rows: Row[], opts: BoardViewOpts = {}): string {
         if (r.priority) badges.push(`<span class="badge pri-${esc(r.priority)}">${esc(r.priority)}</span>`);
         if (r.attempt_count > 0) badges.push(`<span class="badge">${r.attempt_count} att</span>`);
         if (r.open_comment_count > 0) badges.push(`<span class="badge open">${r.open_comment_count} open</span>`);
-        return `<article class="card" draggable="true" data-task-id="${r.id}" data-status="${esc(r.status)}">
+        const chips = parseLabels(r.labels_raw)
+          .map((l) => `<span class="label-chip" style="color:${esc(l.color)};border-color:${esc(l.color)}">${esc(l.name)}</span>`)
+          .join('');
+        const cardClass = r.priority ? `card card-pri-${esc(r.priority)}` : 'card';
+        return `<article class="${cardClass}" draggable="true" data-task-id="${r.id}" data-status="${esc(r.status)}">
           <div class="id">#${r.id}</div>
           <div class="title"><a href="/workspace/${r.id}">${esc(r.title)}</a></div>
+          ${chips ? `<div class="labels">${chips}</div>` : ''}
           ${badges.length ? `<div class="meta">${badges.join('')}</div>` : ''}
         </article>`;
       })
