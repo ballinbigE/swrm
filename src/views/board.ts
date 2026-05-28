@@ -10,6 +10,7 @@ import type Database from 'better-sqlite3';
 
 import { getDb } from '../db';
 import { loadTaskList } from './tasks_list';
+import { parseWorkflow } from '../api/board_prefs';
 
 function esc(s: string | number | null | undefined): string {
   if (s === null || s === undefined) return '';
@@ -21,13 +22,19 @@ function esc(s: string | number | null | undefined): string {
     .replace(/'/g, '&#39;');
 }
 
-const COLUMNS: { key: string; label: string }[] = [
-  { key: 'backlog', label: 'Backlog' },
-  { key: 'todo', label: 'Todo' },
-  { key: 'in_progress', label: 'In Progress' },
-  { key: 'review', label: 'Review' },
-  { key: 'done', label: 'Done' },
-];
+const STATUS_LABELS: Record<string, string> = {
+  backlog: 'Backlog',
+  todo: 'Todo',
+  in_progress: 'In Progress',
+  review: 'Review',
+  done: 'Done',
+  blocked: 'Blocked',
+  shipped: 'Shipped',
+};
+
+function columnsFor(workflow: string[]): { key: string; label: string }[] {
+  return workflow.map((key) => ({ key, label: STATUS_LABELS[key] ?? key }));
+}
 
 const CSS = `
 * { box-sizing: border-box }
@@ -78,13 +85,38 @@ interface Row {
   open_comment_count: number;
 }
 
-export function renderBoardHtml(rows: Row[]): string {
+export interface BoardViewOpts {
+  /** Ordered status keys → columns. Defaults to the canonical five. */
+  workflow?: string[];
+  /** Board accent color (hex). Defaults to copper. */
+  color?: string;
+  /** Active board slug (for the switcher + spawn scoping). */
+  activeSlug?: string;
+  /** All boards for the switcher dropdown. */
+  boards?: { slug: string; name: string }[];
+}
+
+export function renderBoardHtml(rows: Row[], opts: BoardViewOpts = {}): string {
+  const workflow = opts.workflow && opts.workflow.length > 0
+    ? opts.workflow
+    : ['backlog', 'todo', 'in_progress', 'review', 'done'];
+  const COLUMNS = columnsFor(workflow);
+  const accent = opts.color && /^#[0-9a-fA-F]{6}$/.test(opts.color) ? opts.color : '#d97757';
+  const firstCol = COLUMNS[0]?.key ?? 'backlog';
+
   const byStatus = new Map<string, Row[]>();
   for (const c of COLUMNS) byStatus.set(c.key, []);
   for (const r of rows) {
-    const bucket = byStatus.get(r.status) ?? byStatus.get('backlog')!;
+    // Tasks whose status isn't in this board's workflow fall into the first column.
+    const bucket = byStatus.get(r.status) ?? byStatus.get(firstCol)!;
     bucket.push(r);
   }
+
+  const switcher = (opts.boards && opts.boards.length > 1)
+    ? `<select onchange="location.href='/board?board='+this.value" style="background:#1a1d24;color:#e8e6e3;border:1px solid #2a2e38;border-radius:4px;padding:4px 8px;font:inherit">
+        ${opts.boards.map((b) => `<option value="${esc(b.slug)}"${b.slug === opts.activeSlug ? ' selected' : ''}>${esc(b.name)}</option>`).join('')}
+      </select>`
+    : '';
 
   const colsHtml = COLUMNS.map((col) => {
     const cards = (byStatus.get(col.key) ?? [])
@@ -108,12 +140,19 @@ export function renderBoardHtml(rows: Row[]): string {
   }).join('');
 
   return `<!doctype html><html lang="en"><head>
-<meta charset="utf-8" /><title>board · Loom</title><style>${CSS}</style></head><body>
+<meta charset="utf-8" /><title>board · Loom</title><style>${CSS}
+.board { grid-template-columns: repeat(${COLUMNS.length}, 1fr) !important }
+.col.drag-over { border-color: ${accent} }
+.card .title a:hover { color: ${accent} }
+.col-head { border-bottom-color: ${accent}33 }
+</style></head><body>
 <header class="topbar">
   <div class="brand">Loom <span class="slash">/</span> <span class="title">board</span></div>
+  ${switcher}
   <div class="spacer"></div>
   <a href="/">home</a>
   <a href="/tasks">tasks</a>
+  <a href="/settings">settings</a>
 </header>
 <div class="touch-note">Drag-to-execute is disabled on touch devices — open a task and use the Spawn button.</div>
 <main class="board">${colsHtml}</main>
@@ -195,15 +234,34 @@ export async function boardHandler(
   res: http.ServerResponse,
   db: Database.Database = getDb(),
 ): Promise<boolean> {
-  const url = (req.url ?? '/').split('?')[0];
-  if (!BOARD_RE.test(url)) return false;
+  const reqUrl = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
+  if (!BOARD_RE.test(reqUrl.pathname)) return false;
   if ((req.method ?? 'GET') !== 'GET') {
     res.writeHead(405, { 'Content-Type': 'text/plain' });
     res.end('method not allowed');
     return true;
   }
-  const rows = loadTaskList(db) as unknown as Row[];
+
+  const allBoards = db
+    .prepare(`SELECT slug, name, color, workflow FROM boards ORDER BY position, id`)
+    .all() as { slug: string; name: string; color: string; workflow: string }[];
+
+  const wantSlug = reqUrl.searchParams.get('board');
+  const active = (wantSlug && allBoards.find((b) => b.slug === wantSlug)) || allBoards[0];
+
+  // Scope tasks to the active board when one exists; else show everything.
+  const rows = (active
+    ? loadTaskList(db, { board: active.slug })
+    : loadTaskList(db)) as unknown as Row[];
+
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-  res.end(renderBoardHtml(rows));
+  res.end(
+    renderBoardHtml(rows, {
+      workflow: active ? parseWorkflow(active.workflow) : undefined,
+      color: active?.color,
+      activeSlug: active?.slug,
+      boards: allBoards.map((b) => ({ slug: b.slug, name: b.name })),
+    }),
+  );
   return true;
 }

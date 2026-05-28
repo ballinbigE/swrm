@@ -32,6 +32,8 @@ import { workspaceHandler } from './views/workspace';
 import { tasksListHandler } from './views/tasks_list';
 import { boardHandler } from './views/board';
 import { homeHandler } from './views/home';
+import { settingsHandler } from './views/settings';
+import { boardPrefsHandler } from './api/board_prefs';
 // Legacy markdown-mirror kanban dropped in loom (was tied to the original host repo
 // tasks/backlog.md format). The SQLite-backed /tasks view is the canonical
 // kanban now; home '/' serves the idea-input form (M8).
@@ -126,8 +128,10 @@ async function main(): Promise<void> {
     if (await attemptCommentsHandler(req, res, db)) return;
     if (await attemptsApiHandler(req, res, db)) return;
     if (await workspaceHandler(req, res, db)) return;
+    if (await boardPrefsHandler(req, res, db)) return;
     if (await tasksListHandler(req, res, db)) return;
     if (await boardHandler(req, res, db)) return;
+    if (await settingsHandler(req, res, db)) return;
     if (await tasksApiHandler(req, res, db)) return;
     if (await epicsApiHandler(req, res, db)) return;
     if (await prioritizeBacklogHandler(req, res, db)) return;
