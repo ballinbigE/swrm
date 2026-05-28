@@ -87,7 +87,7 @@ describe('renderTasksListHtml', () => {
           effort_hours: null,
           due_date: null,
           attempt_count: 0,
-          open_comment_count: 0, external_md_ref: null,
+          open_comment_count: 0, external_md_ref: null, labels_raw: null,
         },
       ],
       {},
@@ -103,7 +103,7 @@ describe('renderTasksListHtml', () => {
         {
           id: 1, board_slug: 'p', board_name: 'P', title: '<script>x</script>',
           status: 'backlog', priority: null, effort_hours: null, due_date: null,
-          attempt_count: 0, open_comment_count: 0, external_md_ref: null,
+          attempt_count: 0, open_comment_count: 0, external_md_ref: null, labels_raw: null,
         },
       ],
       {},

@@ -1,4 +1,4 @@
-import { renderBoardHtml } from '../board';
+import { renderBoardHtml, parseLabels } from '../board';
 
 interface Row {
   id: number;
@@ -7,6 +7,7 @@ interface Row {
   priority: string | null;
   attempt_count: number;
   open_comment_count: number;
+  labels_raw?: string | null;
 }
 
 const row = (over: Partial<Row> = {}): Row => ({
@@ -16,6 +17,7 @@ const row = (over: Partial<Row> = {}): Row => ({
   priority: null,
   attempt_count: 0,
   open_comment_count: 0,
+  labels_raw: null,
   ...over,
 });
 
@@ -74,5 +76,42 @@ describe('renderBoardHtml', () => {
     const html = renderBoardHtml([]);
     expect(html).toContain("matchMedia('(hover: none)')");
     expect(html).toContain('Drag-to-execute is disabled on touch');
+  });
+
+  it('renders a colored label chip per label so features are visible', () => {
+    const html = renderBoardHtml([row({ labels_raw: 'feature:#60a5fa|bug:#ef5350' })]);
+    expect(html).toContain('label-chip');
+    expect(html).toContain('feature');
+    expect(html).toContain('bug');
+    // chip uses the label's own color
+    expect(html).toMatch(/label-chip[^>]*#60a5fa/);
+  });
+
+  it('applies a priority stripe class to the card so priority reads at a glance', () => {
+    const html = renderBoardHtml([row({ priority: 'high' })]);
+    expect(html).toMatch(/class="card card-pri-high"/);
+  });
+});
+
+describe('parseLabels', () => {
+  it('parses pipe-joined name:color pairs', () => {
+    expect(parseLabels('feature:#60a5fa|bug:#ef5350')).toEqual([
+      { name: 'feature', color: '#60a5fa' },
+      { name: 'bug', color: '#ef5350' },
+    ]);
+  });
+
+  it('returns [] for null/empty', () => {
+    expect(parseLabels(null)).toEqual([]);
+    expect(parseLabels(undefined)).toEqual([]);
+    expect(parseLabels('')).toEqual([]);
+  });
+
+  it('tolerates a label name containing a colon by splitting on the last one', () => {
+    expect(parseLabels('build:ci:#34d399')).toEqual([{ name: 'build:ci', color: '#34d399' }]);
+  });
+
+  it('skips malformed fragments with no color', () => {
+    expect(parseLabels('feature|bug:#ef5350')).toEqual([{ name: 'bug', color: '#ef5350' }]);
   });
 });

@@ -26,6 +26,8 @@ interface TaskListRow {
   attempt_count: number;
   open_comment_count: number;
   external_md_ref: string | null;
+  /** Pipe-joined "name:color" pairs for this task's labels, or null. */
+  labels_raw: string | null;
 }
 
 function esc(s: string | number | null | undefined): string {
@@ -59,6 +61,9 @@ export function loadTaskList(
       `SELECT
          t.id, t.title, t.status, t.priority, t.effort_hours, t.due_date,
          t.external_md_ref,
+         (SELECT GROUP_CONCAT(l.name || ':' || l.color, '|')
+            FROM task_labels tl JOIN labels l ON l.id = tl.label_id
+            WHERE tl.task_id = t.id) AS labels_raw,
          b.slug AS board_slug, b.name AS board_name,
          (SELECT COUNT(*) FROM attempts a WHERE a.task_id = t.id) AS attempt_count,
          (SELECT COUNT(*) FROM attempt_comments ac
