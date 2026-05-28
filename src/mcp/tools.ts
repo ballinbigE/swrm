@@ -13,6 +13,7 @@ import {
   listAttempts,
   updateAttempt,
 } from '../api/attempts';
+import { getSkillRuns, listSkills, runSkillNow } from '../api/skills';
 
 type ToolContent = { type: 'text'; text: string };
 
@@ -266,6 +267,23 @@ function suggestionsToday(_args: Record<string, unknown>, db: Database.Database)
   return textResult(rows);
 }
 
+function listSkillsTool(_args: Record<string, unknown>, db: Database.Database): ToolContent[] {
+  return textResult(listSkills(db));
+}
+
+function getSkillRunsTool(args: Record<string, unknown>, db: Database.Database): ToolContent[] {
+  const id = args.id;
+  if (typeof id !== 'number') throw new Error('id (number) is required');
+  const limit = typeof args.limit === 'number' ? args.limit : 20;
+  return textResult(getSkillRuns(db, id, limit));
+}
+
+async function runSkillTool(args: Record<string, unknown>, db: Database.Database): Promise<ToolContent[]> {
+  const id = args.id;
+  if (typeof id !== 'number') throw new Error('id (number) is required');
+  return textResult(await runSkillNow(db, id));
+}
+
 export const TOOLS: ToolDef[] = [
   {
     name: 'swrm__list_boards',
@@ -419,6 +437,34 @@ export const TOOLS: ToolDef[] = [
       additionalProperties: false,
     },
     handler: deleteAttemptTool,
+  },
+  {
+    name: 'swrm__list_skills',
+    description: 'List all Skill Cards (Skill Mode): scheduled automations with type (agent|command), frequency, side_effects, enabled state, last_status, last_run, next_due.',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    handler: listSkillsTool,
+  },
+  {
+    name: 'swrm__run_skill',
+    description: 'Run a skill now, bypassing its schedule (respects the single-flight lock). Returns {status:"ok"|"error"} or {skipped:true} if already running.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'number' } },
+      required: ['id'],
+      additionalProperties: false,
+    },
+    handler: runSkillTool,
+  },
+  {
+    name: 'swrm__get_skill_runs',
+    description: 'Return recent run history (agent_runs rows) for a skill, newest first.',
+    inputSchema: {
+      type: 'object',
+      properties: { id: { type: 'number' }, limit: { type: 'number', default: 20 } },
+      required: ['id'],
+      additionalProperties: false,
+    },
+    handler: getSkillRunsTool,
   },
 ];
 

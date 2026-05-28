@@ -201,6 +201,7 @@ export function renderTasksListHtml(
   <h1>${rows.length} task${rows.length === 1 ? '' : 's'}</h1>
   <div class="spacer"></div>
   <button class="btn-plan" onclick="openPlanModal()" title="AI Project Breakdown — describe an idea, get a Ralph-loop-ready PRD">+ Generate plan</button>
+  <a href="/skills">skills</a>
   <a href="/">← board</a>
 </header>
 

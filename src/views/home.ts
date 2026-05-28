@@ -111,6 +111,7 @@ export function renderHomeHtml(opts: { hasApiKey: boolean } = { hasApiKey: false
   <div class="spacer"></div>
   <a href="/tasks">tasks</a>
   <a href="/board">board</a>
+  <a href="/skills">skills</a>
 </header>
 <main>
   <div class="hero">

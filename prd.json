@@ -1,0 +1,186 @@
+{
+  "project": "swrm",
+  "branchName": "ralph/swarm-skills",
+  "description": "Swarm Skills (Skill Mode) — recurring scheduled automations defined as Markdown Skill Cards, run by an in-process orchestrator (agent or command executor), stateful with a git+Markdown audit trail.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Skill Card schema + skills table",
+      "description": "As a developer, I need to persist Skill Card definitions so the orchestrator can query what is due.",
+      "acceptanceCriteria": [
+        "Migration 009_skills.sql adds skills table: id, name, project, type, enabled (default 1), frequency, side_effects, timeout, agent, needs_worktree, mcp (json text), command, prompt_ref, on_findings, last_run, next_due, last_status (default 'idle'), file_path, body_hash, updated_at",
+        "Export TS types Skill, SkillType ('agent'|'command'), SideEffects ('read-only'|'writes'|'external') from one module",
+        "Migration runs cleanly on a fresh DB and on the current v8 DB",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Migration 009_skills.sql + src/skills/types.ts ship; schema tests green; chain verified to v10."
+    },
+    {
+      "id": "US-002",
+      "title": "Link agent_runs to skills (reuse, not a new table)",
+      "description": "As a developer, I need per-run records so skills are stateful and auditable — reusing the existing agent_runs table instead of a parallel skill_runs table.",
+      "acceptanceCriteria": [
+        "Migration 010_agent_runs_skill_link.sql adds nullable columns to agent_runs: skill_id (FK to skills, ON DELETE SET NULL), finished_at, findings_count",
+        "Index on (skill_id, created_at)",
+        "Legacy agent_runs inserts (bug_fix, prioritize_backlog) keep working — new columns are nullable",
+        "Migration runs cleanly on fresh and current DB",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Run-history implemented by linking the existing agent_runs table (010_agent_runs_skill_link.sql) rather than a new skill_runs table — same goal (per-run records, FK to skills, auditable) with less duplication."
+    },
+    {
+      "id": "US-003",
+      "title": "Sync Skill Cards (Markdown to SQLite)",
+      "description": "As a user, I want my *.skill.md files to be the source of truth, synced into the DB like other markdown.",
+      "acceptanceCriteria": [
+        "Add sync_skills.ts that reads SWRM_SKILLS_DIR (default ~/.swrm/<project>/skills/), parses frontmatter, upserts into skills",
+        "Body content hash stored in body_hash; unchanged files are skipped (no write)",
+        "A card with enabled:false is soft-disabled in DB (not deleted)",
+        "Unit test: a fixture card parses to the expected row",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "src/skills/sync.ts (parseSkillCard + syncSkillsDir, dependency-free frontmatter parser). 7 tests green incl. unchanged-skip, body-change update, soft-disable on enabled:false + file removal."
+    },
+    {
+      "id": "US-004",
+      "title": "Frequency parser to next_due",
+      "description": "As a developer, I need to turn a human frequency string into the next due timestamp.",
+      "acceptanceCriteria": [
+        "Pure function nextDue(frequency, lastRun, now): Date",
+        "Supports @hourly, @daily, '@daily HH:MM' (local time), Nh, Nm, weekly:<dow>",
+        "Unknown/invalid frequency throws a clear error (no silent fallback)",
+        "Unit tests cover each format plus a missed-run (lastRun far in past) case",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "src/skills/schedule.ts (nextDue, local time per D-2). 11 tests green. Not clamped to future — orchestrator (US-007) collapses catch-up by re-scheduling from now."
+    },
+    {
+      "id": "US-005",
+      "title": "Command executor + write-back",
+      "description": "As a user, I want a type:command skill to run its shell entrypoint and record the result.",
+      "acceptanceCriteria": [
+        "Runs command in the project cwd, captures stdout/stderr, enforces timeout (kills past it)",
+        "Writes a skill_runs row (ok/error) and appends a dated summary to the card ## Runs section (newest first, capped 20)",
+        "Non-zero exit sets status='error' with stderr in error; no exception escapes the executor",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "src/skills/executor.ts (runCommandSkill) + src/skills/runlog.ts (recordRun + appendRunToCard, cap 20). spawn(shell) — command is operator-authored card content. Run history reuses agent_runs (not skill_runs). 5 tests green incl. timeout-kill."
+    },
+    {
+      "id": "US-006",
+      "title": "Agent executor (no worktree by default)",
+      "description": "As a user, I want a type:agent skill to spawn an agent that reads the card body as its prompt and acts via allowed MCP tools.",
+      "acceptanceCriteria": [
+        "Reuses src/lib/agent_runner.ts; spawns the configured agent (claude/codex/gemini)",
+        "No git worktree is created unless needs_worktree:true",
+        "Only MCP servers listed in mcp: are passed to the agent run",
+        "Captures the agent final summary into the run row and card Runs log",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "src/skills/agent.ts (runAgentSkill). Reuses agent_runner spawn pattern; card body = prompt; MCP allowlist via SWRM_SKILL_MCP env. No worktree (orchestrator decides cwd). 3 tests green."
+    },
+    {
+      "id": "US-007",
+      "title": "In-process orchestrator tick",
+      "description": "As a user, I want due skills to run automatically while the swrm server is up.",
+      "acceptanceCriteria": [
+        "On server boot a ticker (default 30s, SWRM_TICK_MS) selects enabled=1 AND next_due<=now AND last_status!='running'",
+        "Single-flight: skill marked 'running' before dispatch; on boot any 'running' older than its timeout is reset to 'error' (stale lock)",
+        "Missed-run catch-up: a far-past next_due runs once, then next_due is recomputed from now",
+        "After each run, last_run, next_due, last_status persisted to DB and written back to the card frontmatter",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "src/skills/orchestrator.ts (tickOnce, runSkillRow, resetStaleRunning, startOrchestrator). Single-flight claim, catch-up collapse, NULL next_due = due. Wired into server.ts boot. 8 tests green."
+    },
+    {
+      "id": "US-008",
+      "title": "Run now manual trigger",
+      "description": "As a user, I want to run a skill on demand without waiting for its schedule.",
+      "acceptanceCriteria": [
+        "POST /api/skills/:id/run enqueues an immediate run (respects single-flight)",
+        "Run now button on the skill row triggers it; UI reflects running then ok/error",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "POST /api/skills/:id/run via src/api/skills.ts (runSkillNow → shared runSkillRow). Run-now button in /skills view. E2E verified: returned {status:ok}, card ## Runs written."
+    },
+    {
+      "id": "US-009",
+      "title": "Skills list view (/skills)",
+      "description": "As a user, I want a screen listing all Skill Cards with status and schedule.",
+      "acceptanceCriteria": [
+        "/skills route renders each card: name, project, type, side_effects badge, enabled state, last_status, last_run, next_due",
+        "Topbar nav link added alongside tasks/board",
+        "Empty state with guidance when no skills exist",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "src/views/skills.ts (renderSkillsHtml + skillsViewHandler). Nav link added to home/board/tasks/settings topbars. Empty state + XSS-escaped. 7 view tests green; E2E confirmed row renders (name, project, read-only badge)."
+    },
+    {
+      "id": "US-010",
+      "title": "Enable/pause toggle (writes back to Markdown)",
+      "description": "As a user, I want to pause a skill from the UI and have it reflected in the source Markdown.",
+      "acceptanceCriteria": [
+        "Toggle on the skill row flips enabled in DB and rewrites the card frontmatter enabled: line",
+        "A paused skill is skipped by the orchestrator tick",
+        "Editing enabled: in the file then syncing yields the same result (file and UI agree)",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": "setSkillEnabled in src/api/skills.ts: flips DB + rewrites card 'enabled:' line. PATCH /api/skills/:id. E2E verified: pause rewrote card to enabled:false, paused skill skipped by tick. 2 API tests green."
+    },
+    {
+      "id": "US-011",
+      "title": "MCP tools for skills",
+      "description": "As Claude, I want to list, run, and inspect skills via MCP so I can drive Skill Mode from a conversation.",
+      "acceptanceCriteria": [
+        "Adds mcp__swrm__list_skills, mcp__swrm__run_skill, mcp__swrm__get_skill_runs",
+        "Registered in the stdio JSON-RPC server (src/mcp/) and covered by the MCP integration test",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": true,
+      "notes": "swrm__list_skills / swrm__run_skill / swrm__get_skill_runs added to src/mcp/tools.ts (client sees mcp__swrm__*). 4 tests green. Note: server registers 'swrm__' prefix per existing convention."
+    },
+    {
+      "id": "US-012",
+      "title": "Architecture diagram (diagram-as-code)",
+      "description": "As a maintainer, I want a current rendered diagram of Skill Mode so the architecture stays visible.",
+      "acceptanceCriteria": [
+        "docs/skill-mode-architecture.md contains a Mermaid diagram matching the PRD section 6",
+        "Diagram renders without syntax errors",
+        "Linked from the PRD and the README roadmap entry",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": "docs/skill-mode-architecture.md (Mermaid flowchart + module map + invariants). Linked from PRD + README roadmap."
+    }
+  ]
+}
