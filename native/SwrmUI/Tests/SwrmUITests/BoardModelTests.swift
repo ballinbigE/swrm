@@ -1,6 +1,7 @@
 import XCTest
 @testable import SwrmUI
 import SwrmCore
+import Combine
 
 final class BoardModelTests: XCTestCase {
     func testInitialStateIsIdle() {
@@ -71,6 +72,46 @@ final class BoardModelTests: XCTestCase {
         let second = BoardModel(bookmarkStore: BookmarkStore(defaults: defaults))
         second.restoreLastFolder()
         XCTAssertEqual(storiesCount(second.state), 1)
+    }
+
+    func testRefreshPicksUpNewlyEmptiedFolder() throws {
+        let dir = try makeStoriesDir([
+            "---\nid: sc-1\nstate: started\n---\nWire login",
+        ])
+        let model = BoardModel(bookmarkStore: BookmarkStore(defaults: Self.scratchDefaults()))
+        model.openFolder(dir)
+        XCTAssertEqual(storiesCount(model.state), 1)
+
+        try FileManager.default.removeItem(at: dir.appendingPathComponent("sc-1.md"))
+        model.refresh()
+        XCTAssertEqual(model.state, .empty)
+    }
+
+    func testWatcherReloadsWhenFileAdded() throws {
+        let dir = try makeStoriesDir([
+            "---\nid: sc-1\nstate: started\n---\nWire login",
+        ])
+        let model = BoardModel(bookmarkStore: BookmarkStore(defaults: Self.scratchDefaults()))
+        model.openFolder(dir)
+
+        let expectation = expectation(description: "board grows to 2 stories")
+        var cancellable: AnyCancellable?
+        cancellable = model.$state.sink { state in
+            if case let .loaded(board) = state,
+               board.columns.reduce(0, { $0 + $1.stories.count }) == 2 {
+                expectation.fulfill()
+            }
+        }
+
+        // Add a second story file; the watcher should reload.
+        DispatchQueue.global().asyncAfter(deadline: .now() + 0.2) {
+            let f = dir.appendingPathComponent("sc-2.md")
+            try? "---\nid: sc-2\nstate: backlog\n---\nBump deps"
+                .write(to: f, atomically: true, encoding: .utf8)
+        }
+
+        wait(for: [expectation], timeout: 5.0)
+        cancellable?.cancel()
     }
 
     // MARK: helpers (used by later tasks too)

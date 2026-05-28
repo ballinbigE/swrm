@@ -46,6 +46,21 @@ public final class BoardModel: ObservableObject {
         present(pickedFolder: url, saveBookmark: false)
     }
 
+    /// Manual re-read of the current folder (refresh button + iOS foreground).
+    public func refresh() {
+        guard let dir = currentStoriesDir else { return }
+        reload(storiesDir: dir)
+    }
+
+    private func startWatching(_ dir: URL) {
+        let w = FolderWatcher(url: dir) { [weak self] in
+            guard let self, let d = self.currentStoriesDir else { return }
+            self.reload(storiesDir: d)
+        }
+        watcher = w
+        w.start()
+    }
+
     private func present(pickedFolder: URL, saveBookmark: Bool) {
         // Release any previously-open folder.
         watcher?.stop(); watcher = nil
@@ -70,6 +85,7 @@ public final class BoardModel: ObservableObject {
         currentStoriesDir = storiesDir
         state = .loading
         reload(storiesDir: storiesDir)
+        startWatching(storiesDir)
     }
 
     private func reload(storiesDir: URL) {
