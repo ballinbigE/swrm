@@ -30,6 +30,7 @@ import { planApiHandler } from './api/plan';
 import { planExecuteHandler } from './api/plan_execute';
 import { workspaceHandler } from './views/workspace';
 import { tasksListHandler } from './views/tasks_list';
+import { boardHandler } from './views/board';
 import { homeHandler } from './views/home';
 // Legacy markdown-mirror kanban dropped in loom (was tied to the original host repo
 // tasks/backlog.md format). The SQLite-backed /tasks view is the canonical
@@ -126,6 +127,7 @@ async function main(): Promise<void> {
     if (await attemptsApiHandler(req, res, db)) return;
     if (await workspaceHandler(req, res, db)) return;
     if (await tasksListHandler(req, res, db)) return;
+    if (await boardHandler(req, res, db)) return;
     if (await tasksApiHandler(req, res, db)) return;
     if (await epicsApiHandler(req, res, db)) return;
     if (await prioritizeBacklogHandler(req, res, db)) return;
