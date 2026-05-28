@@ -114,7 +114,7 @@ export function renderHomeHtml(opts: { hasApiKey: boolean } = { hasApiKey: false
 </header>
 <main>
   <div class="hero">
-    <h1 class="wordmark">Lo<span class="accent">o</span>m</h1>
+    <h1 class="wordmark">sw<span class="accent">r</span>m</h1>
     <p class="tagline">Describe a feature. Get a plan. Spawn the first agent — in under a minute.</p>
     <div class="idea-box">
       <textarea id="idea-input" placeholder="Describe what you want to build…"${disabledAttr}></textarea>
