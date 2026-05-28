@@ -27,11 +27,13 @@ import { attemptCommentsHandler } from './api/attempt_comments';
 import { previewHandler } from './api/preview';
 import { workspaceStreamHandler } from './api/workspace_stream';
 import { planApiHandler } from './api/plan';
+import { planExecuteHandler } from './api/plan_execute';
 import { workspaceHandler } from './views/workspace';
 import { tasksListHandler } from './views/tasks_list';
+import { homeHandler } from './views/home';
 // Legacy markdown-mirror kanban dropped in loom (was tied to the original host repo
 // tasks/backlog.md format). The SQLite-backed /tasks view is the canonical
-// kanban now. M5/M8 may re-introduce a generic markdown kanban — TBD.
+// kanban now; home '/' serves the idea-input form (M8).
 
 const PORT = Number(process.env.LOOM_PORT ?? process.env.DASHBOARD_PORT ?? 5173);
 const ROOT = process.cwd();
@@ -116,6 +118,7 @@ async function main(): Promise<void> {
     if (await subtasksApiHandler(req, res, db)) return;
     if (await labelsApiHandler(req, res, db)) return;
     if (workspaceStreamHandler(req, res)) return;
+    if (await planExecuteHandler(req, res, db)) return;
     if (await planApiHandler(req, res)) return;
     if (await previewHandler(req, res, db)) return;
     if (await attemptDiffHandler(req, res, db)) return;
@@ -128,13 +131,8 @@ async function main(): Promise<void> {
     if (await prioritizeBacklogHandler(req, res, db)) return;
     if (await bugFixIngestHandler(req, res, db)) return;
     if (suggestionsApiHandler(req, res, db)) return;
-    // Redirect bare '/' to /tasks (kanban entry) until M8 promotes the
-    // idea-input form to the home page.
-    if ((req.url ?? '/') === '/' || (req.url ?? '/') === '/index.html') {
-      res.writeHead(302, { Location: '/tasks' });
-      res.end();
-      return;
-    }
+    // Home '/' serves the idea-input form (M8 — vibecoderplanner pattern).
+    if (await homeHandler(req, res, db)) return;
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('Not Found');
   });
