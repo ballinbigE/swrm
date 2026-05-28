@@ -8,8 +8,8 @@ docs/
 tsconfig.json
 jest.config.cjs
 .gitignore
-.loomrc.local.json
-.loomrc.example.json
+.swrmrc.local.json
+.swrmrc.example.json
 prd-*.json
 coverage/
 .github/

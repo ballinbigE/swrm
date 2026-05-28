@@ -1,0 +1,66 @@
+<svg width="900" height="560" viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, -apple-system, system-ui, sans-serif">
+  <defs>
+    <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0 0 L9 4.5 L0 9 Z" fill="#C9A24B"/>
+    </marker>
+    <style>
+      .box  { fill:#1F1B14; stroke:#F5A623; stroke-width:1.5; rx:12; }
+      .sot  { fill:#2A2410; stroke:#F5A623; stroke-width:2; rx:12; }
+      .svc  { fill:#1B1810; stroke:#8A6A1E; stroke-width:1.3; rx:12; }
+      .t    { fill:#F3E9D2; font-size:16px; font-weight:600; text-anchor:middle; }
+      .s    { fill:#B9AE94; font-size:12px; text-anchor:middle; }
+      .lnk  { stroke:#C9A24B; stroke-width:1.6; fill:none; }
+      .dash { stroke:#8A6A1E; stroke-width:1.4; fill:none; stroke-dasharray:4 4; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="900" height="560" fill="#15130F"/>
+  <text x="40" y="40" fill="#F3E9D2" font-size="24" font-weight="700">Swrm — architecture</text>
+  <text x="40" y="62" fill="#B9AE94" font-size="13">git-native Markdown is the only shared contract · every surface is a renderer</text>
+
+  <!-- band labels -->
+  <text x="24" y="106" fill="#8A6A1E" font-size="11" font-weight="700" transform="rotate(-90 24 106)">SURFACES</text>
+  <text x="24" y="236" fill="#8A6A1E" font-size="11" font-weight="700" transform="rotate(-90 24 236)">CORES</text>
+  <text x="24" y="366" fill="#8A6A1E" font-size="11" font-weight="700" transform="rotate(-90 24 366)">DATA</text>
+  <text x="24" y="496" fill="#8A6A1E" font-size="11" font-weight="700" transform="rotate(-90 24 496)">SERVICES</text>
+
+  <!-- SURFACES -->
+  <rect class="box" x="195" y="78" width="150" height="56" rx="12"/>
+  <text class="t" x="270" y="103">macOS app</text><text class="s" x="270" y="121">SwiftUI</text>
+  <rect class="box" x="375" y="78" width="150" height="56" rx="12"/>
+  <text class="t" x="450" y="103">iOS app</text><text class="s" x="450" y="121">SwiftUI</text>
+  <rect class="box" x="555" y="78" width="150" height="56" rx="12"/>
+  <text class="t" x="630" y="103">localhost / web</text><text class="s" x="630" y="121">browser</text>
+
+  <!-- CORES -->
+  <rect class="box" x="170" y="200" width="250" height="64" rx="12"/>
+  <text class="t" x="295" y="227">SwrmCore — Swift</text><text class="s" x="295" y="247">SwiftPM · parse · index · board · git</text>
+  <rect class="box" x="480" y="200" width="250" height="64" rx="12"/>
+  <text class="t" x="605" y="227">swrm-web — Node / TS</text><text class="s" x="605" y="247">existing · parse · index · board</text>
+
+  <!-- DATA / source of truth -->
+  <rect class="sot" x="290" y="326" width="320" height="64" rx="12"/>
+  <text class="t" x="450" y="352">.swrm/stories/*.md</text><text class="s" x="450" y="372">YAML front-matter + body · git = DB + audit log</text>
+
+  <!-- SERVICES -->
+  <rect class="svc" x="106" y="452" width="300" height="72" rx="12"/>
+  <text class="t" x="256" y="480">Provider — GitHub · GitLab</text><text class="s" x="256" y="500">auth · issues · commit · push · deploy</text>
+  <rect class="svc" x="430" y="452" width="180" height="72" rx="12"/>
+  <text class="t" x="520" y="480">CI overlay</text><text class="s" x="520" y="500">is HEAD green? (live)</text>
+  <rect class="svc" x="634" y="452" width="160" height="72" rx="12"/>
+  <text class="t" x="714" y="480">Secure tokens</text><text class="s" x="714" y="500">Keychain / encrypted</text>
+
+  <!-- arrows: surfaces -> cores -->
+  <path class="lnk" d="M270 134 L290 196" marker-end="url(#ah)"/>
+  <path class="lnk" d="M450 134 L320 196" marker-end="url(#ah)"/>
+  <path class="lnk" d="M630 134 L612 196" marker-end="url(#ah)"/>
+  <!-- arrows: cores <-> data -->
+  <path class="lnk" d="M295 264 L420 326" marker-end="url(#ah)"/>
+  <path class="lnk" d="M605 264 L490 326" marker-end="url(#ah)"/>
+  <!-- cross-cutting: cores use services (routed left margin) -->
+  <path class="dash" d="M170 232 L70 232 L70 488 L106 488" marker-end="url(#ah)"/>
+  <path class="dash" d="M730 232 L820 232 L820 488 L610 488" marker-end="url(#ah)"/>
+  <!-- providers -> ci, tokens -->
+  <path class="dash" d="M406 488 L430 488" marker-end="url(#ah)"/>
+  <path class="dash" d="M610 488 L634 488" marker-end="url(#ah)"/>
+</svg>

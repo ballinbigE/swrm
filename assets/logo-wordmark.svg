@@ -1,28 +1,33 @@
 <svg width="360" height="120" viewBox="0 0 360 120" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Swrm">
   <title>Swrm</title>
+  <defs>
+    <clipPath id="bclip"><ellipse cx="0" cy="0" rx="12" ry="8.5"/></clipPath>
+    <g id="bee">
+      <ellipse cx="0" cy="0" rx="12" ry="8.5" fill="#d97757"/>
+      <g clip-path="url(#bclip)">
+        <rect x="-2.2" y="-10" width="3.6" height="20" fill="#3d2114"/>
+        <rect x="4.8" y="-10" width="3.6" height="20" fill="#3d2114"/>
+        <rect x="-9.2" y="-10" width="3" height="20" fill="#3d2114"/>
+      </g>
+      <ellipse cx="-3" cy="-8.5" rx="7" ry="4.2" fill="#f3ede6" opacity="0.85" transform="rotate(-30 -3 -8.5)"/>
+      <ellipse cx="3.5" cy="-9" rx="6.4" ry="3.8" fill="#f3ede6" opacity="0.8" transform="rotate(22 3.5 -9)"/>
+    </g>
+  </defs>
+
   <!-- mark -->
   <rect x="4" y="4" width="112" height="112" rx="26" fill="#15171c"/>
   <rect x="4.5" y="4.5" width="111" height="111" rx="25.5" stroke="#2a2e38"/>
-  <g stroke-linecap="round">
-    <line x1="40" y1="30" x2="40" y2="90" stroke="#a8552f" stroke-width="9"/>
-    <line x1="60" y1="30" x2="60" y2="90" stroke="#a8552f" stroke-width="9"/>
-    <line x1="80" y1="30" x2="80" y2="90" stroke="#a8552f" stroke-width="9"/>
-    <line x1="30" y1="42" x2="90" y2="42" stroke="#d97757" stroke-width="9"/>
-    <line x1="30" y1="60" x2="90" y2="60" stroke="#e89070" stroke-width="9"/>
-    <line x1="30" y1="78" x2="90" y2="78" stroke="#d97757" stroke-width="9"/>
-    <line x1="40" y1="30" x2="40" y2="37" stroke="#c2693c" stroke-width="9"/>
-    <line x1="60" y1="30" x2="60" y2="37" stroke="#c2693c" stroke-width="9"/>
-    <line x1="80" y1="30" x2="80" y2="37" stroke="#c2693c" stroke-width="9"/>
-    <line x1="40" y1="48" x2="40" y2="54" stroke="#c2693c" stroke-width="9"/>
-    <line x1="60" y1="48" x2="60" y2="54" stroke="#c2693c" stroke-width="9"/>
-    <line x1="80" y1="48" x2="80" y2="54" stroke="#c2693c" stroke-width="9"/>
-    <line x1="40" y1="66" x2="40" y2="72" stroke="#c2693c" stroke-width="9"/>
-    <line x1="60" y1="66" x2="60" y2="72" stroke="#c2693c" stroke-width="9"/>
-    <line x1="80" y1="66" x2="80" y2="72" stroke="#c2693c" stroke-width="9"/>
-    <line x1="40" y1="83" x2="40" y2="90" stroke="#c2693c" stroke-width="9"/>
-    <line x1="60" y1="83" x2="60" y2="90" stroke="#c2693c" stroke-width="9"/>
-    <line x1="80" y1="83" x2="80" y2="90" stroke="#c2693c" stroke-width="9"/>
+  <g stroke="#d97757" stroke-width="2" fill="none" opacity="0.35" stroke-linecap="round" stroke-dasharray="0.5 6">
+    <path d="M26 99 C 44 74, 59 82, 74 59"/>
+    <path d="M34 44 C 54 54, 64 42, 89 52"/>
+    <path d="M59 104 C 74 92, 86 96, 99 79"/>
   </g>
+  <use href="#bee" transform="translate(76,56) scale(0.95) rotate(-12)"/>
+  <use href="#bee" transform="translate(48,46) scale(0.7) rotate(8)"/>
+  <use href="#bee" transform="translate(90,84) scale(0.62) rotate(-20)"/>
+  <use href="#bee" transform="translate(54,86) scale(0.8) rotate(15)"/>
+  <use href="#bee" transform="translate(34,70) scale(0.5) rotate(-6)"/>
+
   <!-- wordmark -->
   <text x="138" y="76" font-family="ui-rounded, -apple-system, system-ui, sans-serif"
         font-size="58" font-weight="700" letter-spacing="-1" fill="#e8e6e3">swrm</text>
