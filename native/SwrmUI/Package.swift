@@ -12,5 +12,6 @@ let package = Package(
     ],
     targets: [
         .target(name: "SwrmUI", dependencies: ["SwrmCore"]),
+        .testTarget(name: "SwrmUITests", dependencies: ["SwrmUI"]),
     ]
 )
