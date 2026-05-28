@@ -1,5 +1,5 @@
 {
-  "name": "loom",
+  "name": "loomctl",
   "version": "0.1.0",
   "description": "MCP-native kanban for parallel coding agents. Markdown-friendly. Localhost-first.",
   "bin": {

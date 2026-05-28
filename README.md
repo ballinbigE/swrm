@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>MCP-native kanban for parallel coding agents. Markdown-friendly. Localhost-first. <code>npx loom</code>.</strong>
+  <strong>MCP-native kanban for parallel coding agents. Markdown-friendly. Localhost-first. <code>npx loomctl</code>.</strong>
 </p>
 
 <!-- TODO: 30-second screencast GIF — see docs/screencast-script.md -->
@@ -23,8 +23,8 @@ Layered on top of three convictions:
 ## Install
 
 ```sh
-npx loom
-# opens http://localhost:5173
+npx loomctl
+# opens http://localhost:5173 — daily command is `loom`
 ```
 
 That's it. SQLite DB lives at `.loom/loom.db` (gitignored). Press `s` in any workspace to spawn an attempt.
@@ -65,7 +65,7 @@ loom/
 
 ## Quickstart
 
-1. `npx loom` — boots dashboard at http://localhost:5173.
+1. `npx loomctl` — boots dashboard at http://localhost:5173 (installed command is `loom`).
 2. On the home page, type an idea ("Build a dark-mode toggle for my app").
 3. Click **Generate & Execute** — Claude breaks it into 3-12 user stories, you preview, save as `prd-<slug>.json`.
 4. Go to **Tasks** → click any story → **+ Attempt**.
@@ -97,7 +97,7 @@ Add to your project's `.mcp.json`:
   "mcpServers": {
     "loom": {
       "command": "npx",
-      "args": ["loom", "mcp"]
+      "args": ["loomctl", "mcp"]
     }
   }
 }
