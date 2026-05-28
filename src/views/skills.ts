@@ -8,7 +8,7 @@ import * as http from 'node:http';
 import type Database from 'better-sqlite3';
 
 import { getDb } from '../db';
-import { listSkills } from '../api/skills';
+import { listSkills, getSkillRuns, type SkillRunRow } from '../api/skills';
 import type { Skill } from '../skills/types';
 
 function esc(s: string | number | null | undefined): string {
@@ -23,7 +23,12 @@ function esc(s: string | number | null | undefined): string {
 
 function fmt(iso: string | null): string {
   if (!iso) return '—';
-  const d = new Date(iso);
+  // sqlite datetime('now') is UTC but zone-less ("2026-05-28 16:09:00"); JS would
+  // read that as local. Normalize zone-less space-format to UTC so run-history
+  // times match the ISO last_run/next_due columns.
+  const norm =
+    / /.test(iso) && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(iso) ? `${iso.replace(' ', 'T')}Z` : iso;
+  const d = new Date(norm);
   if (Number.isNaN(d.getTime())) return esc(iso);
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
@@ -54,18 +59,43 @@ td { padding: 10px; border-bottom: 1px solid #16191f; vertical-align: middle }
 button { font: inherit; border: 1px solid #2a2e38; background: #1a1d24; color: #c8ccd6; border-radius: 4px; padding: 4px 9px; cursor: pointer }
 button:hover { color: #e8e6e3; border-color: #d97757 }
 .empty { color: #6b7280; padding: 40px 10px; text-align: center; font-style: italic }
+.runs-detail > td { background: #0f1115; padding: 4px 10px 12px 10px }
+.runs-detail[hidden] { display: none }
+table.runs { width: auto; border-collapse: collapse; margin: 4px 0 0 }
+table.runs td { border: none; padding: 3px 16px 3px 0; font-size: 12px; color: #8b8f9b; white-space: nowrap }
+table.runs td.run-summary { white-space: normal; color: #c8ccd6 }
+.no-runs { color: #6b7280; font-style: italic; padding: 6px 0 }
 #toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 14px; border-radius: 6px; font-size: 12px; z-index: 200 }
 #toast[hidden] { display: none }
 .toast-error { background: #391a1a; color: #fca5a5 } .toast-info { background: #1e3a5a; color: #93c5fd } .toast-success { background: #15321e; color: #4ade80 }
 `;
 
-export function renderSkillsHtml(skills: Skill[]): string {
+function renderRuns(runs: SkillRunRow[]): string {
+  if (runs.length === 0) return `<div class="no-runs">No runs yet.</div>`;
+  const rows = runs
+    .map(
+      (r) => `<tr>
+        <td>${fmt(r.created_at)}</td>
+        <td class="status-${esc(r.status)}">${esc(r.status)}</td>
+        <td>${r.findings_count != null ? `${esc(r.findings_count)} findings` : ''}</td>
+        <td class="run-summary">${esc(r.notes ?? '')}</td>
+      </tr>`,
+    )
+    .join('');
+  return `<table class="runs"><tbody>${rows}</tbody></table>`;
+}
+
+export function renderSkillsHtml(
+  skills: Skill[],
+  runsBySkill: Map<number, SkillRunRow[]> = new Map(),
+): string {
   const rows = skills
     .map((s) => {
       const statusCls = `status-${esc(s.last_status)}`;
       const enabledCell = s.enabled
         ? `<span class="status-ok">enabled</span>`
         : `<span class="paused">paused</span>`;
+      const runs = runsBySkill.get(s.id) ?? [];
       return `<tr data-skill-id="${s.id}">
         <td><div class="name">${esc(s.name)}</div><div class="sub">${esc(s.project)} · ${esc(s.type)}</div></td>
         <td><span class="badge ${esc(s.side_effects)}">${esc(s.side_effects)}</span></td>
@@ -77,8 +107,10 @@ export function renderSkillsHtml(skills: Skill[]): string {
         <td>
           <button class="run-now" data-id="${s.id}">Run now</button>
           <button class="toggle" data-id="${s.id}" data-enabled="${s.enabled ? 1 : 0}">${s.enabled ? 'Pause' : 'Enable'}</button>
+          <button class="runs-btn" data-id="${s.id}">Runs (${runs.length})</button>
         </td>
-      </tr>`;
+      </tr>
+      <tr class="runs-detail" id="runs-${s.id}" hidden><td colspan="8">${renderRuns(runs)}</td></tr>`;
     })
     .join('');
 
@@ -128,6 +160,12 @@ document.querySelectorAll('.toggle').forEach((btn) => {
     showToast(next ? 'enabled' : 'paused', 'success'); setTimeout(() => location.reload(), 500);
   });
 });
+document.querySelectorAll('.runs-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const row = document.getElementById('runs-' + btn.dataset.id);
+    if (row) row.hidden = !row.hidden;
+  });
+});
 </script>
 </body></html>`;
 }
@@ -146,7 +184,10 @@ export async function skillsViewHandler(
     res.end('method not allowed');
     return true;
   }
+  const skills = listSkills(db);
+  const runsBySkill = new Map<number, SkillRunRow[]>();
+  for (const s of skills) runsBySkill.set(s.id, getSkillRuns(db, s.id, 5));
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-  res.end(renderSkillsHtml(listSkills(db)));
+  res.end(renderSkillsHtml(skills, runsBySkill));
   return true;
 }

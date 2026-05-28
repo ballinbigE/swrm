@@ -46,6 +46,35 @@ describe('renderSkillsHtml (US-009)', () => {
     expect(html).toMatch(/toggle|pause|enable/i);
   });
 
+  it('renders a per-skill run-history detail with a Runs control', () => {
+    const runs = new Map([
+      [
+        1,
+        [
+          {
+            id: 9,
+            status: 'ok',
+            notes: 'scanned 3 inboxes',
+            findings_count: 3,
+            created_at: '2026-05-28T16:00:00Z',
+            finished_at: '2026-05-28T16:00:30Z',
+          },
+        ],
+      ],
+    ]);
+    const html = renderSkillsHtml([skill({ id: 1 })], runs);
+    expect(html).toContain('Runs (1)');
+    expect(html).toContain('id="runs-1"');
+    expect(html).toContain('scanned 3 inboxes');
+    expect(html).toMatch(/3 findings/);
+  });
+
+  it('shows "No runs yet" when a skill has no history', () => {
+    const html = renderSkillsHtml([skill({ id: 1 })], new Map([[1, []]]));
+    expect(html).toContain('Runs (0)');
+    expect(html).toMatch(/no runs yet/i);
+  });
+
   it('reflects paused state for a disabled skill', () => {
     const html = renderSkillsHtml([skill({ enabled: false })]);
     expect(html).toMatch(/paused|disabled/i);
