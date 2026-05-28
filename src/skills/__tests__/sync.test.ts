@@ -80,6 +80,17 @@ describe('syncSkillsDir (US-003)', () => {
     expect(row.file_path).toContain('contact.skill.md');
   });
 
+  it('schedules a new skill forward — next_due is in the future, not due-now', () => {
+    writeCard('contact.skill.md', CARD);
+    const db = makeDb();
+    syncSkillsDir(db, dir);
+    const row = db.prepare(`SELECT next_due FROM skills WHERE name = 'contact-listener'`).get() as {
+      next_due: string | null;
+    };
+    expect(row.next_due).toBeTruthy();
+    expect(new Date(row.next_due as string).getTime()).toBeGreaterThan(Date.now());
+  });
+
   it('skips an unchanged card on the second sync', () => {
     writeCard('contact.skill.md', CARD);
     const db = makeDb();
