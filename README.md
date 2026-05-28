@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>MCP-native kanban for parallel coding agents. Markdown-friendly. Localhost-first. <code>npx swrm</code>.</strong>
+  <strong>MCP-native kanban for parallel coding agents. Markdown-friendly. Localhost-first. <code>npx github:ballinbigE/swrm</code>.</strong>
 </p>
 
 <!-- TODO: 30-second screencast GIF — see docs/screencast-script.md -->
@@ -22,18 +22,19 @@ Layered on top of three convictions:
 
 ## Install
 
-Straight from GitHub (no npm account needed):
+Straight from GitHub — no npm account, no registry:
 
 ```sh
+# one-off run
 npx github:ballinbigE/swrm
 # clones, builds, opens http://localhost:5173
 ```
 
-Or, once published to npm:
+For a persistent `swrm` command, install it globally from GitHub:
 
 ```sh
-npx swrm
-# opens http://localhost:5173 — daily command is `swrm`
+npm i -g github:ballinbigE/swrm
+swrm   # daily command, opens http://localhost:5173
 ```
 
 That's it. SQLite DB lives at `.swrm/swrm.db` (gitignored). Press `s` in any workspace to spawn an attempt.
@@ -74,7 +75,7 @@ swrm/
 
 ## Quickstart
 
-1. `npx swrm` — boots dashboard at http://localhost:5173 (installed command is `swrm`).
+1. `swrm` — boots dashboard at http://localhost:5173 (or `npx github:ballinbigE/swrm` for a one-off run).
 2. On the home page, type an idea ("Build a dark-mode toggle for my app").
 3. Click **Generate & Execute** — Claude breaks it into 3-12 user stories, you preview, save as `prd-<slug>.json`.
 4. Go to **Tasks** → click any story → **+ Attempt**.
@@ -105,8 +106,8 @@ Add to your project's `.mcp.json`:
 {
   "mcpServers": {
     "swrm": {
-      "command": "npx",
-      "args": ["swrm", "mcp"]
+      "command": "swrm",
+      "args": ["mcp"]
     }
   }
 }
