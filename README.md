@@ -123,6 +123,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 Tracked in [GitHub Issues](https://github.com/ballinbigE/swrm/issues). Notable upcoming:
 
+- Skill Mode — scheduled Markdown skill cards ([architecture](docs/skill-mode-architecture.md)) — backend shipping; UI at `/skills`
 - Cross-attempt diff compare (A vs B)
 - WebSocket bidirectional MCP transport
 - Built-in preview plugins for web (Playwright) + Storybook

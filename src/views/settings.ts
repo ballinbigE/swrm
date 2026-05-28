@@ -106,7 +106,7 @@ export function renderSettingsHtml(boards: BoardRow[]): string {
 <header class="topbar">
   <div class="brand">Swrm <span class="slash">/</span> <span class="title">settings</span></div>
   <div class="spacer"></div>
-  <a href="/">home</a><a href="/tasks">tasks</a><a href="/board">board</a>
+  <a href="/">home</a><a href="/tasks">tasks</a><a href="/board">board</a><a href="/skills">skills</a>
 </header>
 <div class="wrap">
   <h1>Preferences</h1>

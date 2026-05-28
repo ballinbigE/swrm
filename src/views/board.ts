@@ -152,6 +152,7 @@ export function renderBoardHtml(rows: Row[], opts: BoardViewOpts = {}): string {
   <div class="spacer"></div>
   <a href="/">home</a>
   <a href="/tasks">tasks</a>
+  <a href="/skills">skills</a>
   <a href="/settings">settings</a>
 </header>
 <div class="touch-note">Drag-to-execute is disabled on touch devices — open a task and use the Spawn button.</div>

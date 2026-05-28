@@ -34,6 +34,10 @@ import { boardHandler } from './views/board';
 import { homeHandler } from './views/home';
 import { settingsHandler } from './views/settings';
 import { boardPrefsHandler } from './api/board_prefs';
+import { skillsApiHandler } from './api/skills';
+import { skillsViewHandler } from './views/skills';
+import { syncSkillsDir } from './skills/sync';
+import { startOrchestrator } from './skills/orchestrator';
 // Legacy markdown-mirror kanban dropped in swrm (was tied to the original host repo
 // tasks/backlog.md format). The SQLite-backed /tasks view is the canonical
 // kanban now; home '/' serves the idea-input form (M8).
@@ -108,6 +112,23 @@ async function main(): Promise<void> {
     console.warn('[swrm] sync-md skipped:', (err as Error).message);
   }
 
+  // 3c. Skill Mode — sync *.skill.md cards, then start the in-process
+  // orchestrator. Skills dir is configurable; defaults outside the repo
+  // (D-1) so it doesn't pollute the target's git tree.
+  try {
+    const os = require('node:os') as typeof import('node:os');
+    const skillsDir = process.env.SWRM_SKILLS_DIR ?? path.join(os.homedir(), '.swrm', 'skills');
+    const sk = syncSkillsDir(db, skillsDir);
+    if (sk.inserted > 0 || sk.updated > 0) {
+      // eslint-disable-next-line no-console
+      console.log(`[swrm] skills synced: +${sk.inserted} ~${sk.updated} (=${sk.unchanged})`);
+    }
+    startOrchestrator(db, { cwdFor: () => ROOT });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[swrm] skill mode skipped:', (err as Error).message);
+  }
+
   // 4. count tasks for the boot banner
   const taskCount = (db.prepare(`SELECT COUNT(*) AS n FROM tasks WHERE archived_at IS NULL`).get() as { n: number }).n;
 
@@ -129,8 +150,10 @@ async function main(): Promise<void> {
     if (await attemptsApiHandler(req, res, db)) return;
     if (await workspaceHandler(req, res, db)) return;
     if (await boardPrefsHandler(req, res, db)) return;
+    if (await skillsApiHandler(req, res, db)) return;
     if (await tasksListHandler(req, res, db)) return;
     if (await boardHandler(req, res, db)) return;
+    if (await skillsViewHandler(req, res, db)) return;
     if (await settingsHandler(req, res, db)) return;
     if (await tasksApiHandler(req, res, db)) return;
     if (await epicsApiHandler(req, res, db)) return;
