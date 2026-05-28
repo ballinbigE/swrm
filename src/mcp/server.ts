@@ -14,7 +14,7 @@ import * as readline from 'node:readline';
 import { getDb } from '../db';
 import { dispatch, type RpcRequest } from './dispatch';
 
-async function main(): Promise<void> {
+export async function startMcpServer(): Promise<void> {
   const db = getDb();
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: false });
 
@@ -44,13 +44,13 @@ async function main(): Promise<void> {
     process.exit(0);
   });
 
-  // Crash banner to stderr so the client knows the process started.
-  process.stderr.write(`[pm-mcp] ready (db=${process.env.PM_DB_PATH ?? 'tasks/pm.db'})\n`);
+  // Ready banner to stderr (stdout is reserved for JSON-RPC frames).
+  process.stderr.write(`[loom-mcp] ready (db=${process.env.LOOM_DB_PATH ?? process.env.PM_DB_PATH ?? '.loom/loom.db'})\n`);
 }
 
 if (require.main === module) {
-  main().catch((err) => {
-    process.stderr.write(`[pm-mcp] fatal: ${err instanceof Error ? err.message : String(err)}\n`);
+  startMcpServer().catch((err) => {
+    process.stderr.write(`[loom-mcp] fatal: ${err instanceof Error ? err.message : String(err)}\n`);
     process.exit(1);
   });
 }

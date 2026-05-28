@@ -45,7 +45,7 @@ DOCS: https://github.com/ballinbigE/loom
 `);
 }
 
-function main(): void {
+async function main(): Promise<void> {
   if (cmd === '--version' || cmd === '-v') {
     // eslint-disable-next-line no-console
     console.log(readVersion());
@@ -57,17 +57,26 @@ function main(): void {
   }
   if (cmd === 'mcp') {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require('./mcp/server');
+    const { startMcpServer } = require('./mcp/server') as typeof import('./mcp/server');
+    await startMcpServer();
     return;
   }
   if (cmd === 'plan') {
+    // plan.ts runs its CLI under require.main guard; invoking it directly
+    // here would skip that. Delegate by re-exec'ing tsx/node on the module
+    // is overkill — instead plan exposes runPlanCli().
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require('./plan');
+    const planMod = require('./plan') as { runPlanCli?: () => Promise<void> };
+    if (planMod.runPlanCli) await planMod.runPlanCli();
     return;
   }
-  // Default: boot the http server
+  // Default: boot the http server (server.ts runs main() on import).
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require('./server');
 }
 
-main();
+main().catch((err) => {
+  // eslint-disable-next-line no-console
+  console.error('[loom] fatal:', err instanceof Error ? err.message : String(err));
+  process.exit(1);
+});

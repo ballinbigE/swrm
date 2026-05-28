@@ -18,7 +18,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsdown",
+    "build": "tsc -p tsconfig.build.json && cp -r src/migrations dist/migrations && chmod +x dist/cli.js",
     "dev": "tsx src/cli.ts",
     "test": "jest",
     "typecheck": "tsc --noEmit",

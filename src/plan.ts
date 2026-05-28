@@ -177,8 +177,8 @@ function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50);
 }
 
-// CLI: `npm run pm:plan -- --idea "..." --out prd-foo.json`
-if (require.main === module) {
+// CLI: `loom plan --idea "..." --out prd-foo.json`
+export async function runPlanCli(): Promise<void> {
   const argv = process.argv.slice(2);
   const arg = (name: string): string | undefined => {
     const i = argv.indexOf(`--${name}`);
@@ -188,19 +188,22 @@ if (require.main === module) {
   const out = arg('out');
   if (!idea) {
     // eslint-disable-next-line no-console
-    console.error('usage: npm run pm:plan -- --idea "<text>" [--out prd-<slug>.json]');
+    console.error('usage: loom plan --idea "<text>" [--out prd-<slug>.json]');
     process.exit(1);
   }
-  planFromIdea(idea)
-    .then((prd) => {
-      const filename = out ?? `prd-${slugify(prd.userStories[0]?.title ?? 'plan')}.json`;
-      fs.writeFileSync(path.resolve(filename), JSON.stringify(prd, null, 2) + '\n');
-      // eslint-disable-next-line no-console
-      console.log(`[pm:plan] ${prd.userStories.length} stories → ${filename}`);
-    })
-    .catch((err) => {
-      // eslint-disable-next-line no-console
-      console.error(`[pm:plan] ${err.message}`);
-      process.exit(1);
-    });
+  try {
+    const prd = await planFromIdea(idea);
+    const filename = out ?? `prd-${slugify(prd.userStories[0]?.title ?? 'plan')}.json`;
+    fs.writeFileSync(path.resolve(filename), JSON.stringify(prd, null, 2) + '\n');
+    // eslint-disable-next-line no-console
+    console.log(`[loom plan] ${prd.userStories.length} stories → ${filename}`);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(`[loom plan] ${(err as Error).message}`);
+    process.exit(1);
+  }
+}
+
+if (require.main === module) {
+  void runPlanCli();
 }

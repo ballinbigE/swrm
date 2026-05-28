@@ -45,7 +45,7 @@ describe('mcp/server.ts (real subprocess)', () => {
 
     // Wait for the 'ready' banner on stderr before sending requests.
     const waitForReady = setInterval(() => {
-      if (stderr.includes('[pm-mcp] ready')) {
+      if (stderr.includes('[loom-mcp] ready')) {
         clearInterval(waitForReady);
         child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize' }) + '\n');
         child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list' }) + '\n');
