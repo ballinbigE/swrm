@@ -12,6 +12,7 @@ import type Database from 'better-sqlite3';
 import { runAgentSkill } from './agent';
 import { runCommandSkill } from './executor';
 import { nextDue } from './schedule';
+import { syncSkillsDir } from './sync';
 
 export interface SkillRow {
   id: number;
@@ -37,6 +38,9 @@ export interface TickOpts {
   runner?: SkillRunner;
   /** Resolve the working dir for a skill (e.g. its project repo / worktree). */
   cwdFor?: (skill: SkillRow) => string | undefined;
+  /** If set, re-sync this skills dir into the DB at the start of each tick so
+   *  new/edited *.skill.md cards appear without a server restart. */
+  syncDir?: string;
 }
 
 export interface TickResult {
@@ -108,6 +112,16 @@ export async function runSkillRow(
 
 export async function tickOnce(db: Database.Database, opts: TickOpts = {}): Promise<TickResult> {
   const now = opts.now ?? new Date();
+
+  // Pick up new/edited cards each tick (non-fatal on parse/read error).
+  if (opts.syncDir) {
+    try {
+      syncSkillsDir(db, opts.syncDir);
+    } catch {
+      /* a bad card shouldn't stop scheduled runs; surfaced at next manual sync */
+    }
+  }
+
   const due = db
     .prepare(
       `SELECT * FROM skills
