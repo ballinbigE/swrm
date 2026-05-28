@@ -1,0 +1,54 @@
+name: Swrm
+options:
+  bundleIdPrefix: com.fintechadventures
+  createIntermediateGroups: true
+  deploymentTarget:
+    macOS: "13.0"
+    iOS: "16.0"
+settings:
+  base:
+    DEVELOPMENT_TEAM: D2PM6R797Q
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+packages:
+  SwrmCore:
+    path: SwrmCore
+  SwrmUI:
+    path: SwrmUI
+targets:
+  SwrmMac:
+    type: application
+    platform: macOS
+    sources:
+      - Apps/Shared
+    dependencies:
+      - package: SwrmCore
+        product: SwrmCore
+      - package: SwrmUI
+        product: SwrmUI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fintechadventures.swrm.mac
+        PRODUCT_NAME: Swrm
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Swrm
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
+  SwrmiOS:
+    type: application
+    platform: iOS
+    sources:
+      - Apps/Shared
+    dependencies:
+      - package: SwrmCore
+        product: SwrmCore
+      - package: SwrmUI
+        product: SwrmUI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fintechadventures.swrm.ios
+        PRODUCT_NAME: Swrm
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        TARGETED_DEVICE_FAMILY: "1,2"

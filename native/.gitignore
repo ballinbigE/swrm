@@ -1,0 +1,8 @@
+# Build artifacts
+build/
+.build/
+DerivedData/
+.swiftpm/
+
+# XcodeGen output — regenerate with `xcodegen generate`
+*.xcodeproj
