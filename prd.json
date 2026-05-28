@@ -77,7 +77,7 @@
       ],
       "priority": 5,
       "passes": true,
-      "notes": ""
+      "notes": "src/skills/executor.ts (runCommandSkill) + src/skills/runlog.ts (recordRun + appendRunToCard, cap 20). spawn(shell) — command is operator-authored card content. Run history reuses agent_runs (not skill_runs). 5 tests green incl. timeout-kill."
     },
     {
       "id": "US-006",
@@ -92,7 +92,7 @@
       ],
       "priority": 6,
       "passes": true,
-      "notes": ""
+      "notes": "src/skills/agent.ts (runAgentSkill). Reuses agent_runner spawn pattern; card body = prompt; MCP allowlist via SWRM_SKILL_MCP env. No worktree (orchestrator decides cwd). 3 tests green."
     },
     {
       "id": "US-007",
@@ -108,7 +108,7 @@
       ],
       "priority": 7,
       "passes": true,
-      "notes": ""
+      "notes": "src/skills/orchestrator.ts (tickOnce, runSkillRow, resetStaleRunning, startOrchestrator). Single-flight claim, catch-up collapse, NULL next_due = due. Wired into server.ts boot. 8 tests green."
     },
     {
       "id": "US-008",
@@ -122,7 +122,7 @@
       ],
       "priority": 8,
       "passes": true,
-      "notes": ""
+      "notes": "POST /api/skills/:id/run via src/api/skills.ts (runSkillNow → shared runSkillRow). Run-now button in /skills view. E2E verified: returned {status:ok}, card ## Runs written."
     },
     {
       "id": "US-009",
@@ -137,7 +137,7 @@
       ],
       "priority": 9,
       "passes": true,
-      "notes": ""
+      "notes": "src/views/skills.ts (renderSkillsHtml + skillsViewHandler). Nav link added to home/board/tasks/settings topbars. Empty state + XSS-escaped. 7 view tests green; E2E confirmed row renders (name, project, read-only badge)."
     },
     {
       "id": "US-010",
@@ -152,7 +152,7 @@
       ],
       "priority": 10,
       "passes": true,
-      "notes": ""
+      "notes": "setSkillEnabled in src/api/skills.ts: flips DB + rewrites card 'enabled:' line. PATCH /api/skills/:id. E2E verified: pause rewrote card to enabled:false, paused skill skipped by tick. 2 API tests green."
     },
     {
       "id": "US-011",
@@ -166,7 +166,7 @@
       ],
       "priority": 11,
       "passes": true,
-      "notes": ""
+      "notes": "swrm__list_skills / swrm__run_skill / swrm__get_skill_runs added to src/mcp/tools.ts (client sees mcp__swrm__*). 4 tests green. Note: server registers 'swrm__' prefix per existing convention."
     },
     {
       "id": "US-012",
@@ -180,7 +180,7 @@
       ],
       "priority": 12,
       "passes": true,
-      "notes": ""
+      "notes": "docs/skill-mode-architecture.md (Mermaid flowchart + module map + invariants). Linked from PRD + README roadmap."
     }
   ]
 }
