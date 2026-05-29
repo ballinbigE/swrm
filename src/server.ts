@@ -32,6 +32,7 @@ import { workspaceHandler } from './views/workspace';
 import { tasksListHandler } from './views/tasks_list';
 import { boardHandler } from './views/board';
 import { homeHandler } from './views/home';
+import { faviconHandler } from './views/favicon';
 import { settingsHandler } from './views/settings';
 import { boardPrefsHandler } from './api/board_prefs';
 import { skillsApiHandler } from './api/skills';
@@ -137,6 +138,7 @@ async function main(): Promise<void> {
   // 4. boot http server. /api/* routes go first (US-004+), then the
   // markdown-mirror kanban handler at /, then 404.
   const server = http.createServer(async (req, res) => {
+    if (faviconHandler(req, res)) return;
     if (boardsApiHandler(req, res, db)) return;
     // Nested-under-task routes first — subtasks, labels, attempts all mount
     // at /api/tasks/:id/{subtasks,labels,attempts} which would collide with
