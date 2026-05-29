@@ -32,6 +32,8 @@ public final class BoardModel: ObservableObject {
     private var watcher: FolderWatcher?
     private var currentStoriesDir: URL?
     private var scopedURL: URL?
+    private let writer = StoryWriter()
+    private var suppressNextReload = false
 
     public init(projectStore: ProjectStore = ProjectStore()) {
         self.projectStore = projectStore
@@ -93,9 +95,30 @@ public final class BoardModel: ObservableObject {
         reload(storiesDir: dir)
     }
 
+    /// Move a story to a new column (changes its `state`), written back to disk.
+    /// Optimistic with revert-to-error on write failure; the resulting self-write
+    /// reload is suppressed once so the board doesn't flicker.
+    public func moveStory(_ id: String, to newState: WorkflowState) {
+        guard case let .loaded(board) = state, let dir = currentStoriesDir else { return }
+        var all = board.columns.flatMap { $0.stories }
+        guard let idx = all.firstIndex(where: { $0.id == id }) else { return }
+        if all[idx].state == newState { return }
+
+        all[idx].state = newState
+        state = .loaded(Board(stories: all))   // optimistic
+        suppressNextReload = true
+        do {
+            try writer.setState(storyID: id, to: newState, in: dir)
+        } catch {
+            suppressNextReload = false
+            state = .error("Couldn't save move")
+        }
+    }
+
     private func startWatching(_ dir: URL) {
         let w = FolderWatcher(url: dir) { [weak self] in
             guard let self, let d = self.currentStoriesDir else { return }
+            if self.suppressNextReload { self.suppressNextReload = false; return }
             self.reload(storiesDir: d)
         }
         watcher = w

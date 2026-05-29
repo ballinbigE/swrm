@@ -189,6 +189,45 @@ final class BoardModelTests: XCTestCase {
         XCTAssertNotNil(second.currentProjectID)
     }
 
+    private func stateOf(_ state: LoadState, id: String) -> WorkflowState? {
+        guard case let .loaded(board) = state else { return nil }
+        return board.columns.flatMap { $0.stories }.first { $0.id == id }?.state
+    }
+
+    func testMoveStoryUpdatesBoardOptimisticallyAndPersists() throws {
+        let dir = try makeStoriesDir([
+            "---\nid: sc-1\nstate: backlog\n---\nWire login",
+        ])
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
+        model.openFolder(dir)
+        XCTAssertEqual(stateOf(model.state, id: "sc-1"), .backlog)
+
+        model.moveStory("sc-1", to: .started)
+        XCTAssertEqual(stateOf(model.state, id: "sc-1"), .started) // optimistic
+
+        // persisted on disk
+        let reloaded = try StoryStore(directory: dir).load().first { $0.id == "sc-1" }
+        XCTAssertEqual(reloaded?.state, .started)
+    }
+
+    func testMoveToSameColumnIsNoOp() throws {
+        let dir = try makeStoriesDir(["---\nid: sc-1\nstate: started\n---\nx"])
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
+        model.openFolder(dir)
+        model.moveStory("sc-1", to: .started)
+        XCTAssertEqual(stateOf(model.state, id: "sc-1"), .started)
+    }
+
+    func testMoveFailureRevertsToError() throws {
+        let dir = try makeStoriesDir(["---\nid: sc-1\nstate: backlog\n---\nx"])
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
+        model.openFolder(dir)
+        // delete the file out from under it so the surgical write throws .notFound
+        try FileManager.default.removeItem(at: dir.appendingPathComponent("sc-1.md"))
+        model.moveStory("sc-1", to: .done)
+        if case .error = model.state { } else { XCTFail("expected .error, got \(model.state)") }
+    }
+
     // MARK: helpers
 
     static func scratchDefaults() -> UserDefaults {
