@@ -29,11 +29,12 @@ function printHelp(): void {
   console.log(`swrm v${readVersion()} — MCP-native kanban for parallel coding agents
 
 USAGE:
-  swrm                       Boot dashboard at http://localhost:$SWRM_PORT (default 5173)
-  swrm mcp                   Boot MCP JSON-RPC stdio server (for .mcp.json)
-  swrm plan --idea "..."     Generate a PRD from an idea (writes prd-<slug>.json)
-  swrm --version             Print version
-  swrm --help                Print this help
+  swrm                                      Boot dashboard at http://localhost:$SWRM_PORT (default 5173)
+  swrm mcp                                  Boot MCP JSON-RPC stdio server (for .mcp.json)
+  swrm plan --idea "..."                    Generate a PRD from an idea (writes prd-<slug>.json)
+  swrm import-project <db-path> --into <slug>  Merge tasks from an existing swrm DB into a project
+  swrm --version                            Print version
+  swrm --help                               Print this help
 
 ENV:
   SWRM_PORT                  Override the http port
@@ -68,6 +69,32 @@ async function main(): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const planMod = require('./plan') as { runPlanCli?: () => Promise<void> };
     if (planMod.runPlanCli) await planMod.runPlanCli();
+    return;
+  }
+  if (cmd === 'import-project') {
+    // Usage: swrm import-project <source-db-path> --into <project-slug>
+    const sourceDbPath = argv[1];
+    const intoIdx = argv.indexOf('--into');
+    const projectSlug = intoIdx !== -1 ? argv[intoIdx + 1] : undefined;
+
+    if (!sourceDbPath || !projectSlug) {
+      process.stderr.write(
+        'Usage: swrm import-project <source-db-path> --into <project-slug>\n',
+      );
+      process.exitCode = 1;
+      return;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getDb } = require('./db') as typeof import('./db');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { importProject } = require('./import_project') as typeof import('./import_project');
+    const db = getDb();
+    const result = importProject(db, { sourceDbPath, projectSlug });
+    // eslint-disable-next-line no-console
+    console.log(
+      `[swrm] imported ${result.imported} task(s) into '${projectSlug}' board '${result.boardSlug}' (skipped ${result.skipped})`,
+    );
     return;
   }
   // Default: boot the http server (server.ts runs main() on import).
