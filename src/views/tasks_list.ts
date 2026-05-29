@@ -13,6 +13,8 @@ import type Database from 'better-sqlite3';
 
 import { getDb } from '../db';
 import { listAttempts } from '../api/attempts';
+import { listProjects } from '../api/projects';
+import { resolveProject } from '../lib/project_context';
 
 interface TaskListRow {
   id: number;
@@ -42,11 +44,15 @@ function esc(s: string | number | null | undefined): string {
 
 export function loadTaskList(
   db: Database.Database,
-  filters: { board?: string | null; status?: string | null } = {},
+  filters: { board?: string | null; status?: string | null; project?: string | null } = {},
 ): TaskListRow[] {
   const where: string[] = ['t.archived_at IS NULL'];
   const params: Record<string, unknown> = {};
 
+  if (filters.project) {
+    where.push(`b.project_id = (SELECT id FROM projects WHERE slug = @project)`);
+    params.project = filters.project;
+  }
   if (filters.board) {
     where.push(`b.slug = @board`);
     params.board = filters.board;
@@ -163,12 +169,14 @@ tr:hover { background: #15181f }
 
 export function renderTasksListHtml(
   rows: TaskListRow[],
-  filters: { board?: string | null; status?: string | null } = {},
+  filters: { board?: string | null; status?: string | null; project?: string | null } = {},
+  allProjects: { slug: string; name: string }[] = [],
 ): string {
   const statuses = ['all', 'backlog', 'todo', 'in_progress', 'review', 'done'];
   const filterLinks = statuses
     .map((s) => {
       const url = new URL('http://x/tasks');
+      if (filters.project) url.searchParams.set('project', filters.project);
       if (filters.board) url.searchParams.set('board', filters.board);
       if (s !== 'all') url.searchParams.set('status', s);
       const href = url.pathname + (url.search || '');
@@ -176,6 +184,12 @@ export function renderTasksListHtml(
       return `<a href="${href}" class="${isActive ? 'active' : ''}">${s}</a>`;
     })
     .join('');
+
+  const projectSwitcher = allProjects.length > 1
+    ? `<select onchange="(function(v){var u=new URL(location.href);u.searchParams.set('project',v);location.href=u.toString();})(this.value)" style="background:#1a1d24;color:#e8e6e3;border:1px solid #2a2e38;border-radius:4px;padding:4px 8px;font:inherit">
+        ${allProjects.map((p) => `<option value="${esc(p.slug)}"${p.slug === filters.project ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}
+      </select>`
+    : '';
 
   const rowsHtml = rows
     .map((r) => {
@@ -204,6 +218,7 @@ export function renderTasksListHtml(
 </head><body>
 <header class="topbar">
   <div class="brand">Swrm <span class="slash">/</span> <span class="title">tasks</span></div>
+  ${projectSwitcher}
   <h1>${rows.length} task${rows.length === 1 ? '' : 's'}</h1>
   <div class="spacer"></div>
   <button class="btn-plan" onclick="openPlanModal()" title="AI Project Breakdown — describe an idea, get a Ralph-loop-ready PRD">+ Generate plan</button>
@@ -303,14 +318,17 @@ export async function tasksListHandler(
     res.end('method not allowed');
     return true;
   }
+  const activeProject = resolveProject(db, url);
+  const allProjects = listProjects(db);
   const filters = {
     board: url.searchParams.get('board'),
     status: url.searchParams.get('status'),
+    project: activeProject.slug,
   };
   try {
     const rows = loadTaskList(db, filters);
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-    res.end(renderTasksListHtml(rows, filters));
+    res.end(renderTasksListHtml(rows, filters, allProjects.map((p) => ({ slug: p.slug, name: p.name }))));
   } catch (err) {
     res.writeHead(500, { 'Content-Type': 'text/plain' });
     res.end(`tasks list failed: ${(err as Error).message}`);

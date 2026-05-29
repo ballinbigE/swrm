@@ -9,8 +9,11 @@ import * as http from 'node:http';
 import type Database from 'better-sqlite3';
 
 import { getDb } from '../db';
-import { loadTaskList } from './tasks_list';
+import { listProjects, ProjectRow } from '../api/projects';
 import { parseWorkflow } from '../api/board_prefs';
+import { resolveProject } from '../lib/project_context';
+import { syncProjectMarkdown } from '../sync_md';
+import { loadTaskList } from './tasks_list';
 
 function esc(s: string | number | null | undefined): string {
   if (s === null || s === undefined) return '';
@@ -149,6 +152,10 @@ export interface BoardViewOpts {
   legendLabels?: { name: string; color: string }[];
   /** Active board id — quick-add posts new tasks onto this board. */
   activeBoardId?: number;
+  /** All projects for the project switcher. */
+  allProjects?: { slug: string; name: string }[];
+  /** Active project slug. */
+  activeProjectSlug?: string;
 }
 
 export function renderBoardHtml(rows: Row[], opts: BoardViewOpts = {}): string {
@@ -167,8 +174,14 @@ export function renderBoardHtml(rows: Row[], opts: BoardViewOpts = {}): string {
     bucket.push(r);
   }
 
+  const projectSwitcher = (opts.allProjects && opts.allProjects.length > 1)
+    ? `<select onchange="swrmGo('project',this.value)" style="background:#1a1d24;color:#e8e6e3;border:1px solid #2a2e38;border-radius:4px;padding:4px 8px;font:inherit">
+        ${opts.allProjects.map((p) => `<option value="${esc(p.slug)}"${p.slug === opts.activeProjectSlug ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}
+      </select>`
+    : '';
+
   const switcher = (opts.boards && opts.boards.length > 1)
-    ? `<select onchange="location.href='/board?board='+this.value" style="background:#1a1d24;color:#e8e6e3;border:1px solid #2a2e38;border-radius:4px;padding:4px 8px;font:inherit">
+    ? `<select onchange="swrmGo('board',this.value)" style="background:#1a1d24;color:#e8e6e3;border:1px solid #2a2e38;border-radius:4px;padding:4px 8px;font:inherit">
         ${opts.boards.map((b) => `<option value="${esc(b.slug)}"${b.slug === opts.activeSlug ? ' selected' : ''}>${esc(b.name)}</option>`).join('')}
       </select>`
     : '';
@@ -236,6 +249,7 @@ export function renderBoardHtml(rows: Row[], opts: BoardViewOpts = {}): string {
 </style></head><body>
 <header class="topbar">
   <div class="brand">Swrm <span class="slash">/</span> <span class="title">board</span></div>
+  ${projectSwitcher}
   ${switcher}
   <div class="spacer"></div>
   <button class="topbar-btn" onclick="document.getElementById('legend').showModal()" title="Legend &amp; shortcuts (press ?)">⚡ legend</button>
@@ -249,6 +263,12 @@ export function renderBoardHtml(rows: Row[], opts: BoardViewOpts = {}): string {
 ${legendDialog}
 <div id="toast" hidden></div>
 <script>
+function swrmGo(param, val) {
+  const u = new URL(location.href);
+  u.searchParams.set(param, val);
+  location.href = u.toString();
+}
+
 let toastTimer = null;
 function showToast(msg, level) {
   const el = document.getElementById('toast');
@@ -381,9 +401,15 @@ export async function boardHandler(
     return true;
   }
 
+  const allProjects = listProjects(db);
+  const activeProject = resolveProject(db, reqUrl);
+
+  // Sync project markdown freshly before rendering (best-effort).
+  try { syncProjectMarkdown(db, activeProject); } catch {}
+
   const allBoards = db
-    .prepare(`SELECT id, slug, name, color, workflow FROM boards ORDER BY position, id`)
-    .all() as { id: number; slug: string; name: string; color: string; workflow: string }[];
+    .prepare(`SELECT id, slug, name, color, workflow FROM boards WHERE project_id = ? ORDER BY position, id`)
+    .all(activeProject.id) as { id: number; slug: string; name: string; color: string; workflow: string }[];
 
   const wantSlug = reqUrl.searchParams.get('board');
   const active = (wantSlug && allBoards.find((b) => b.slug === wantSlug)) || allBoards[0];
@@ -394,8 +420,8 @@ export async function boardHandler(
 
   // Scope tasks to the active board when one exists; else show everything.
   const rows = (active
-    ? loadTaskList(db, { board: active.slug })
-    : loadTaskList(db)) as unknown as Row[];
+    ? loadTaskList(db, { board: active.slug, project: activeProject.slug })
+    : loadTaskList(db, { project: activeProject.slug })) as unknown as Row[];
 
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
   res.end(
@@ -406,6 +432,8 @@ export async function boardHandler(
       activeBoardId: active?.id,
       boards: allBoards.map((b) => ({ slug: b.slug, name: b.name })),
       legendLabels,
+      allProjects: allProjects.map((p) => ({ slug: p.slug, name: p.name })),
+      activeProjectSlug: activeProject.slug,
     }),
   );
   return true;
