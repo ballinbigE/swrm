@@ -97,16 +97,29 @@ export function createProject(db: Database.Database, input: CreateProjectInput):
     db.prepare(`SELECT COALESCE(MAX(position), -1) AS m FROM projects`).get() as { m: number }
   ).m;
 
-  const result = db
-    .prepare(
-      `INSERT INTO projects (slug, name, root_path, color, position)
-       VALUES (?, ?, ?, ?, ?)`,
-    )
-    .run(slug, name.trim(), root_path, color, maxPos + 1);
+  const tx = db.transaction(() => {
+    const result = db
+      .prepare(
+        `INSERT INTO projects (slug, name, root_path, color, position)
+         VALUES (?, ?, ?, ?, ?)`,
+      )
+      .run(slug, name.trim(), root_path, color, maxPos + 1);
+    const projectId = result.lastInsertRowid as number;
+    // Seed one board so the project is usable immediately — the board view
+    // renders nothing without at least one board. Board slug = project slug
+    // (globally unique among boards in practice for a fresh project slug).
+    db.prepare(
+      `INSERT INTO boards (slug, name, color, position, project_id)
+       VALUES (?, ?, ?, 0, ?)
+       ON CONFLICT(slug) DO NOTHING`,
+    ).run(slug, name.trim(), color, projectId);
+    return projectId;
+  });
+  const projectId = tx();
 
   return db
     .prepare(`SELECT * FROM projects WHERE id = ?`)
-    .get(result.lastInsertRowid) as ProjectRow;
+    .get(projectId) as ProjectRow;
 }
 
 export interface UpdateProjectPatch {
