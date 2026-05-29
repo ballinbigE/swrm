@@ -19,14 +19,7 @@ struct FolderPickerButton: View {
     var body: some View {
         #if os(macOS)
         Button {
-            let panel = NSOpenPanel()
-            panel.canChooseDirectories = true
-            panel.canChooseFiles = false
-            panel.allowsMultipleSelection = false
-            panel.prompt = "Open"
-            if panel.runModal() == .OK, let url = panel.url {
-                onPick(url)
-            }
+            presentFolderPanel(onPick: onPick)
         } label: {
             Label(title, systemImage: systemImage)
         }
@@ -43,7 +36,51 @@ struct FolderPickerButton: View {
     }
 }
 
-#if !os(macOS)
+// MARK: - Programmatic trigger modifier
+
+extension View {
+    /// Presents the platform folder picker when `isPresented` becomes `true`.
+    /// On macOS, runs `NSOpenPanel`; on iOS, shows a sheet with `UIDocumentPickerViewController`.
+    func folderPicker(isPresented: Binding<Bool>, onPick: @escaping (URL) -> Void) -> some View {
+        modifier(FolderPickerModifier(isPresented: isPresented, onPick: onPick))
+    }
+}
+
+private struct FolderPickerModifier: ViewModifier {
+    @Binding var isPresented: Bool
+    var onPick: (URL) -> Void
+
+    func body(content: Content) -> some View {
+        #if os(macOS)
+        content
+            .onChange(of: isPresented) { newValue in
+                guard newValue else { return }
+                presentFolderPanel(onPick: onPick)
+                isPresented = false
+            }
+        #else
+        content
+            .sheet(isPresented: $isPresented) {
+                DocumentPicker(onPick: onPick)
+            }
+        #endif
+    }
+}
+
+// MARK: - Helpers
+
+#if os(macOS)
+private func presentFolderPanel(onPick: (URL) -> Void) {
+    let panel = NSOpenPanel()
+    panel.canChooseDirectories = true
+    panel.canChooseFiles = false
+    panel.allowsMultipleSelection = false
+    panel.prompt = "Open"
+    if panel.runModal() == .OK, let url = panel.url {
+        onPick(url)
+    }
+}
+#else
 private struct DocumentPicker: UIViewControllerRepresentable {
     var onPick: (URL) -> Void
 
