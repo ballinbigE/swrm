@@ -17,6 +17,7 @@ import { syncSkillsDir } from './sync';
 export interface SkillRow {
   id: number;
   name: string;
+  project: string;
   type: string;
   agent: string | null;
   mcp: string | null;

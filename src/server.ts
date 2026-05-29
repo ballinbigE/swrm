@@ -12,7 +12,7 @@ import * as path from 'node:path';
 import { getDb, runPendingMigrations } from './db';
 import { gcOrphanWorktrees } from './lib/worktree';
 import { seedDefaults } from './seed';
-import { syncMarkdownToSqlite } from './sync_md';
+import { syncProjectMarkdown } from './sync_md';
 import { boardsApiHandler } from './api/boards';
 import { tasksApiHandler } from './api/tasks';
 import { subtasksApiHandler } from './api/subtasks';
@@ -103,17 +103,17 @@ async function main(): Promise<void> {
     console.warn('[swrm] gc skipped:', (err as Error).message);
   }
 
-  // 3b. markdown ↔ SQLite reconcile (non-fatal on parse error)
+  // 3b. markdown ↔ SQLite reconcile — loop over all projects (non-fatal on parse error).
+  // The 'default' project's root_path == ROOT so legacy behaviour is preserved.
   try {
-    const path = require('node:path') as typeof import('node:path');
-    const sync = syncMarkdownToSqlite(db, [
-      path.join(ROOT, 'tasks', 'todo.md'),
-      path.join(ROOT, 'tasks', 'backlog.md'),
-    ]);
-    if (sync.inserted > 0 || sync.archived > 0) {
-      // eslint-disable-next-line no-console
-      console.log(`[swrm] sync-md inserted ${sync.inserted} · archived ${sync.archived} · unchanged ${sync.unchanged}`);
+    const projects = db.prepare(`SELECT slug, root_path FROM projects`).all() as Array<{slug: string; root_path: string}>;
+    let inserted = 0, archived = 0;
+    for (const p of projects) {
+      const r = syncProjectMarkdown(db, p);
+      inserted += r.inserted;
+      archived += r.archived;
     }
+    if (inserted > 0 || archived > 0) console.log(`[swrm] sync-md inserted ${inserted} · archived ${archived}`);
   } catch (err) {
     // eslint-disable-next-line no-console
     console.warn('[swrm] sync-md skipped:', (err as Error).message);
@@ -132,7 +132,13 @@ async function main(): Promise<void> {
     }
     // Pass syncDir so each tick re-syncs the cards — new/edited *.skill.md
     // appear without a server restart.
-    startOrchestrator(db, { cwdFor: () => ROOT, syncDir: skillsDir });
+    startOrchestrator(db, {
+      cwdFor: (skill) => {
+        const p = db.prepare(`SELECT root_path FROM projects WHERE slug = ?`).get(skill.project) as {root_path: string} | undefined;
+        return p?.root_path ?? ROOT;
+      },
+      syncDir: skillsDir,
+    });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.warn('[swrm] skill mode skipped:', (err as Error).message);
