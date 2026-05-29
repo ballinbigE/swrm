@@ -13,7 +13,7 @@ final class BoardModelTests: XCTestCase {
     }
 
     func testInitialStateIsIdle() {
-        let model = BoardModel(bookmarkStore: BookmarkStore(defaults: Self.scratchDefaults()))
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
         XCTAssertEqual(model.state, .idle)
     }
 
@@ -39,7 +39,7 @@ final class BoardModelTests: XCTestCase {
             "---\nid: sc-1\nstate: started\n---\nWire login",
             "---\nid: sc-2\nstate: backlog\n---\nBump deps",
         ])
-        let model = BoardModel(bookmarkStore: BookmarkStore(defaults: Self.scratchDefaults()))
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
         model.openFolder(dir)
         XCTAssertEqual(storiesCount(model.state), 2)
         XCTAssertEqual(model.folderName, dir.lastPathComponent)
@@ -47,7 +47,7 @@ final class BoardModelTests: XCTestCase {
 
     func testOpenEmptyFolderIsEmptyState() throws {
         let dir = try makeStoriesDir([])
-        let model = BoardModel(bookmarkStore: BookmarkStore(defaults: Self.scratchDefaults()))
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
         model.openFolder(dir)
         XCTAssertEqual(model.state, .empty)
     }
@@ -55,13 +55,13 @@ final class BoardModelTests: XCTestCase {
     func testOpenMissingFolderIsErrorState() {
         let missing = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("swrm-missing-\(UUID().uuidString)", isDirectory: true)
-        let model = BoardModel(bookmarkStore: BookmarkStore(defaults: Self.scratchDefaults()))
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
         model.openFolder(missing)
         if case .error = model.state { } else { XCTFail("expected .error, got \(model.state)") }
     }
 
     func testRestoreWithNoBookmarkIsIdle() {
-        let model = BoardModel(bookmarkStore: BookmarkStore(defaults: Self.scratchDefaults()))
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
         model.restoreLastFolder()
         XCTAssertEqual(model.state, .idle)
     }
@@ -73,12 +73,12 @@ final class BoardModelTests: XCTestCase {
         let defaults = Self.scratchDefaults()
 
         // First launch: open + persist.
-        let first = BoardModel(bookmarkStore: BookmarkStore(defaults: defaults))
+        let first = BoardModel(projectStore: ProjectStore(defaults: defaults))
         first.openFolder(dir)
         XCTAssertEqual(storiesCount(first.state), 1)
 
         // Second launch: a fresh model restores from the same store.
-        let second = BoardModel(bookmarkStore: BookmarkStore(defaults: defaults))
+        let second = BoardModel(projectStore: ProjectStore(defaults: defaults))
         second.restoreLastFolder()
         XCTAssertEqual(storiesCount(second.state), 1)
     }
@@ -87,7 +87,7 @@ final class BoardModelTests: XCTestCase {
         let dir = try makeStoriesDir([
             "---\nid: sc-1\nstate: started\n---\nWire login",
         ])
-        let model = BoardModel(bookmarkStore: BookmarkStore(defaults: Self.scratchDefaults()))
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
         model.openFolder(dir)
         XCTAssertEqual(storiesCount(model.state), 1)
 
@@ -100,7 +100,7 @@ final class BoardModelTests: XCTestCase {
         let dir = try makeStoriesDir([
             "---\nid: sc-1\nstate: started\n---\nWire login",
         ])
-        let model = BoardModel(bookmarkStore: BookmarkStore(defaults: Self.scratchDefaults()))
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
         model.openFolder(dir)
 
         let expectation = expectation(description: "board grows to 2 stories")
@@ -124,7 +124,72 @@ final class BoardModelTests: XCTestCase {
         cancellable?.cancel()
     }
 
-    // MARK: helpers (used by later tasks too)
+    // MARK: - Task E: new recents tests
+
+    func testOpenFolderPopulatesRecentProjects() throws {
+        let dir = try makeStoriesDir([
+            "---\nid: sc-1\nstate: started\n---\nWire login",
+        ])
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
+        model.openFolder(dir)
+        XCTAssertEqual(model.recentProjects.count, 1)
+        XCTAssertNotNil(model.currentProjectID)
+        XCTAssertEqual(model.recentProjects[0].path, dir.resolvingSymlinksInPath().path)
+    }
+
+    func testOpenTwoDifferentFoldersBuildsRecents() throws {
+        let dir1 = try makeStoriesDir([
+            "---\nid: sc-1\nstate: started\n---\nWire login",
+        ])
+        let dir2 = try makeStoriesDir([
+            "---\nid: sc-2\nstate: backlog\n---\nBump deps",
+        ])
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
+        model.openFolder(dir1)
+        model.openFolder(dir2)
+
+        XCTAssertEqual(model.recentProjects.count, 2)
+        // Most recent (dir2) at front
+        XCTAssertEqual(model.recentProjects[0].path, dir2.resolvingSymlinksInPath().path)
+        XCTAssertEqual(model.currentProjectID, model.recentProjects[0].id)
+    }
+
+    func testOpenProjectSwitchesFolderAndCurrentID() throws {
+        let dir1 = try makeStoriesDir([
+            "---\nid: sc-1\nstate: started\n---\nWire login",
+        ])
+        let dir2 = try makeStoriesDir([
+            "---\nid: sc-2\nstate: backlog\n---\nBump deps",
+        ])
+        let store = ProjectStore(defaults: Self.scratchDefaults())
+        let model = BoardModel(projectStore: store)
+        model.openFolder(dir1)
+        model.openFolder(dir2)
+
+        // Remember the first entry
+        let firstEntry = model.recentProjects.first(where: { $0.path == dir1.resolvingSymlinksInPath().path })!
+
+        // Switch back to the first project
+        model.openProject(firstEntry)
+        XCTAssertEqual(model.folderName, dir1.lastPathComponent)
+        XCTAssertEqual(model.currentProjectID, firstEntry.id)
+    }
+
+    func testRestoreLastFolderAfterOpenFolder() throws {
+        let dir = try makeStoriesDir([
+            "---\nid: sc-1\nstate: started\n---\nWire login",
+        ])
+        let defaults = Self.scratchDefaults()
+        let first = BoardModel(projectStore: ProjectStore(defaults: defaults))
+        first.openFolder(dir)
+
+        let second = BoardModel(projectStore: ProjectStore(defaults: defaults))
+        second.restoreLastFolder()
+        XCTAssertEqual(second.folderName, dir.lastPathComponent)
+        XCTAssertNotNil(second.currentProjectID)
+    }
+
+    // MARK: helpers
 
     static func scratchDefaults() -> UserDefaults {
         UserDefaults(suiteName: "swrm.uitest.\(UUID().uuidString)")!
