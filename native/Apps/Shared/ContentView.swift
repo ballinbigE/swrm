@@ -6,6 +6,12 @@ struct ContentView: View {
     @StateObject private var model = BoardModel()
     @Environment(\.scenePhase) private var scenePhase
     @State private var isPickingFolder = false
+    @AppStorage("swrm.lastSeenWhatsNew") private var lastSeenWhatsNew = ""
+    @State private var showWhatsNew = false
+
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+    }
 
     var body: some View {
         NavigationStack {
@@ -20,10 +26,26 @@ struct ContentView: View {
                         }
                         ProjectSwitcherMenu(model: model, onOpenNew: { isPickingFolder = true })
                     }
+                    ToolbarItem(placement: .automatic) {
+                        Text("v\(appVersion)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .sheet(isPresented: $showWhatsNew) {
+                    WhatsNewView(onDismiss: {
+                        lastSeenWhatsNew = WhatsNew.version
+                        showWhatsNew = false
+                    })
                 }
         }
         .folderPicker(isPresented: $isPickingFolder, onPick: { url in model.openFolder(url) })
-        .onAppear { model.restoreLastFolder() }
+        .onAppear {
+            model.restoreLastFolder()
+            if lastSeenWhatsNew != WhatsNew.version {
+                showWhatsNew = true
+            }
+        }
         .onChange(of: scenePhase) { phase in
             if phase == .active { model.refresh() }
         }
