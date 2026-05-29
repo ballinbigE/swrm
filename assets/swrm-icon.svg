@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- swrm app icon — bee-swarm hive cell. Full-bleed charcoal (iOS masks the
+       corners; macOS shows the square). Honey hexagon + focal dot + swarm. -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#241F16"/>
+      <stop offset="100%" stop-color="#15130F"/>
+    </radialGradient>
+    <linearGradient id="honey" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFC24B"/>
+      <stop offset="100%" stop-color="#F5A623"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="512" cy="430" r="330" fill="#F5A623" opacity="0.05"/>
+
+  <!-- main hive cell -->
+  <path d="M512 168 L811 340 V684 L512 856 L213 684 V340 Z"
+        fill="none" stroke="url(#honey)" stroke-width="66" stroke-linejoin="round"/>
+
+  <!-- focal dot (the "nugget" in the cell) -->
+  <circle cx="512" cy="512" r="120" fill="url(#honey)"/>
+
+  <!-- swarm satellites -->
+  <circle cx="512" cy="168" r="30" fill="#FFC24B"/>
+  <circle cx="811" cy="340" r="22" fill="#F5A623" opacity="0.85"/>
+  <circle cx="213" cy="684" r="22" fill="#F5A623" opacity="0.85"/>
+</svg>
