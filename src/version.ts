@@ -22,12 +22,11 @@ export function appVersion(): string {
 
 /** Canonical What's New content for the current release. */
 export const WHATS_NEW = {
-  version: '0.2.0',
-  title: 'swrm v0.2.0 — Native + Multi-Project',
+  version: '0.3.0',
+  title: 'swrm v0.3.0 — Projects on the Web',
   notes: [
-    '🖥️ **Native apps.** Mac & iOS. Point them at any folder of `.swrm/stories` and your board shows up — no localhost, no browser tab.',
-    '⚡ **Live board.** Edit a story file on disk and the card moves itself. Quit mashing refresh.',
-    '🗂️ **Two projects, no sweat.** Flip between repos right from the toolbar — or pop a second window and run two at once.',
-    '🐝 **Fresh face.** New hive-cell app icon + browser favicon, so swrm\'s easy to spot in your dock and tabs.',
+    '🗂️ **Projects on the web.** Register a project in Settings, switch from the dropdown, or keep two tabs open side by side — each pinned to its own repo.',
+    '🔭 **Everything scopes per project.** Boards, tasks, markdown sync, and skill runs all stay in their own lane — no cross-project bleed.',
+    '🍯 **One swrm, every surface.** Project switching now lives on Mac, iOS, and the web.',
   ],
 } as const;

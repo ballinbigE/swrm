@@ -16,22 +16,19 @@ describe('appVersion', () => {
 });
 
 describe('WHATS_NEW', () => {
-  it('has exactly 4 notes', () => {
-    expect(WHATS_NEW.notes).toHaveLength(4);
-  });
-
-  it('version is 0.2.0', () => {
-    expect(WHATS_NEW.version).toBe('0.2.0');
-  });
-
-  it('title matches canonical copy', () => {
-    expect(WHATS_NEW.title).toBe('swrm v0.2.0 — Native + Multi-Project');
-  });
-
-  it('each note is a non-empty string', () => {
+  it('has at least one note, each a non-empty string', () => {
+    expect(WHATS_NEW.notes.length).toBeGreaterThan(0);
     for (const note of WHATS_NEW.notes) {
       expect(typeof note).toBe('string');
       expect(note.length).toBeGreaterThan(0);
     }
+  });
+
+  it('version matches the package version (no drift between notes + package.json)', () => {
+    expect(WHATS_NEW.version).toBe(appVersion());
+  });
+
+  it('has a non-empty title', () => {
+    expect(WHATS_NEW.title.length).toBeGreaterThan(0);
   });
 });
