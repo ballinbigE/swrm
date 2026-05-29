@@ -5,6 +5,7 @@ import SwrmUI
 struct ContentView: View {
     @StateObject private var model = BoardModel()
     @Environment(\.scenePhase) private var scenePhase
+    @State private var isPickingFolder = false
 
     var body: some View {
         NavigationStack {
@@ -17,10 +18,11 @@ struct ContentView: View {
                         } label: {
                             Label("Refresh", systemImage: "arrow.clockwise")
                         }
-                        FolderPickerButton { url in model.openFolder(url) }
+                        ProjectSwitcherMenu(model: model, onOpenNew: { isPickingFolder = true })
                     }
                 }
         }
+        .folderPicker(isPresented: $isPickingFolder, onPick: { url in model.openFolder(url) })
         .onAppear { model.restoreLastFolder() }
         .onChange(of: scenePhase) { phase in
             if phase == .active { model.refresh() }

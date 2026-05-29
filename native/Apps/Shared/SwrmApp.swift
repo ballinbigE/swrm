@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct SwrmApp: App {
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "board") {
             ContentView()
         }
     }
