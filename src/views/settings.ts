@@ -8,7 +8,9 @@ import * as http from 'node:http';
 import type Database from 'better-sqlite3';
 
 import { getDb } from '../db';
+import { listProjects, ProjectRow } from '../api/projects';
 import { ALLOWED_STATUSES, parseWorkflow } from '../api/board_prefs';
+import { resolveProject } from '../lib/project_context';
 
 function esc(s: string | number | null | undefined): string {
   if (s === null || s === undefined) return '';
@@ -64,9 +66,24 @@ input[type=text] { background: #0c0d10; color: #e8e6e3; border: 1px solid #2a2e3
 #toast[hidden] { display: none }
 .toast-error { background: #391a1a; color: #fca5a5 }
 .toast-success { background: #15321e; color: #4ade80 }
+.section-head { font-size: 13px; font-weight: 600; margin: 24px 0 10px; color: #e8e6e3 }
+.add-project-form { background: #0f1115; border: 1px solid #1f232c; border-radius: 8px; padding: 16px; margin-bottom: 14px }
+.add-project-form .field { margin-bottom: 12px }
+.add-project-form .field > label { display: block; color: #8b8f9b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px }
+.add-project-form .hint { color: #4a4f5b; font-size: 11px; margin-top: 4px }
 `;
 
-export function renderSettingsHtml(boards: BoardRow[]): string {
+export function renderSettingsHtml(
+  boards: BoardRow[],
+  allProjects: { slug: string; name: string }[] = [],
+  activeProjectSlug?: string,
+): string {
+  const projectSwitcher = allProjects.length > 1
+    ? `<select onchange="(function(v){var u=new URL(location.href);u.searchParams.set('project',v);location.href=u.toString();})(this.value)" style="background:#1a1d24;color:#e8e6e3;border:1px solid #2a2e38;border-radius:4px;padding:4px 8px;font:inherit">
+        ${allProjects.map((p) => `<option value="${esc(p.slug)}"${p.slug === activeProjectSlug ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}
+      </select>`
+    : '';
+
   const cardsHtml = boards
     .map((b) => {
       const wf = parseWorkflow(b.workflow);
@@ -105,6 +122,7 @@ export function renderSettingsHtml(boards: BoardRow[]): string {
 <meta charset="utf-8" /><title>settings · Swrm</title><style>${CSS}</style></head><body>
 <header class="topbar">
   <div class="brand">Swrm <span class="slash">/</span> <span class="title">settings</span></div>
+  ${projectSwitcher}
   <div class="spacer"></div>
   <a href="/">home</a><a href="/tasks">tasks</a><a href="/board">board</a><a href="/skills">skills</a>
 </header>
@@ -112,6 +130,25 @@ export function renderSettingsHtml(boards: BoardRow[]): string {
   <h1>Preferences</h1>
   <p class="sub">Per-board color + workflow. Changes apply to the kanban at /board.</p>
   ${cardsHtml || '<p class="sub">No boards yet.</p>'}
+  <div class="section-head">Add project</div>
+  <div class="add-project-form">
+    <div class="field">
+      <label>Name</label>
+      <input type="text" id="proj-name" placeholder="My Project" />
+    </div>
+    <div class="field">
+      <label>Slug <span style="font-weight:400;text-transform:none">(unique, lowercase, e.g. my-project)</span></label>
+      <input type="text" id="proj-slug" placeholder="my-project" style="font-family:ui-monospace,monospace" />
+      <div class="hint">Slugs are global and unique — they identify the project in URLs via ?project=&lt;slug&gt;.</div>
+    </div>
+    <div class="field">
+      <label>Root path <span style="font-weight:400;text-transform:none">(absolute path to the project directory)</span></label>
+      <input type="text" id="proj-root" placeholder="/Users/me/projects/my-project" style="width:100%" />
+    </div>
+    <div class="actions">
+      <button class="btn" id="add-project-btn" onclick="addProject()">Add project</button>
+    </div>
+  </div>
 </div>
 <div id="toast" hidden></div>
 <script>
@@ -136,6 +173,24 @@ document.addEventListener('input', (e) => {
     card.querySelector('.swatch').style.background = e.target.value;
   }
 });
+
+async function addProject() {
+  const btn = document.getElementById('add-project-btn');
+  const name = document.getElementById('proj-name').value.trim();
+  const slug = document.getElementById('proj-slug').value.trim();
+  const root_path = document.getElementById('proj-root').value.trim();
+  if (!name || !slug || !root_path) { showToast('name, slug, and root path are required', 'error'); return; }
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/projects', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, slug, root_path }),
+    });
+    if (!r.ok) { const j = await r.json(); showToast('add failed: ' + (j.error || r.statusText), 'error'); return; }
+    showToast('project added', 'success');
+    setTimeout(() => location.reload(), 700);
+  } finally { btn.disabled = false; }
+}
 
 document.addEventListener('click', async (e) => {
   const btn = e.target.closest('[data-save]');
@@ -168,17 +223,23 @@ export async function settingsHandler(
   res: http.ServerResponse,
   db: Database.Database = getDb(),
 ): Promise<boolean> {
-  const url = (req.url ?? '/').split('?')[0];
-  if (!SETTINGS_RE.test(url)) return false;
+  const reqUrl = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
+  if (!SETTINGS_RE.test(reqUrl.pathname)) return false;
   if ((req.method ?? 'GET') !== 'GET') {
     res.writeHead(405, { 'Content-Type': 'text/plain' });
     res.end('method not allowed');
     return true;
   }
+  const allProjects = listProjects(db);
+  const activeProject = resolveProject(db, reqUrl);
   const boards = db
-    .prepare(`SELECT id, slug, name, color, workflow FROM boards ORDER BY position, id`)
-    .all() as BoardRow[];
+    .prepare(`SELECT id, slug, name, color, workflow FROM boards WHERE project_id = ? ORDER BY position, id`)
+    .all(activeProject.id) as BoardRow[];
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-  res.end(renderSettingsHtml(boards));
+  res.end(renderSettingsHtml(
+    boards,
+    allProjects.map((p) => ({ slug: p.slug, name: p.name })),
+    activeProject.slug,
+  ));
   return true;
 }
