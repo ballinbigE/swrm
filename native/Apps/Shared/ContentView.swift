@@ -64,7 +64,7 @@ struct ContentView: View {
             ProgressView("Reading stories…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .loaded(let board):
-            BoardView(board: board)
+            BoardView(board: board, onMove: { id, newState in model.moveStory(id, to: newState) })
         case .empty:
             MessageView(
                 icon: "📭",

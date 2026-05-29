@@ -2,18 +2,22 @@ import SwiftUI
 import SwrmCore
 
 /// The whole board: horizontally-scrolling workflow-state columns.
+/// `onMove(storyID, newState)` is called when a card is dropped on a column;
+/// pass nil for a read-only board (e.g. previews).
 public struct BoardView: View {
     public let board: Board
+    public var onMove: ((String, WorkflowState) -> Void)?
 
-    public init(board: Board) {
+    public init(board: Board, onMove: ((String, WorkflowState) -> Void)? = nil) {
         self.board = board
+        self.onMove = onMove
     }
 
     public var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: 16) {
                 ForEach(board.columns, id: \.state) { column in
-                    ColumnView(column: column)
+                    ColumnView(column: column, onMove: onMove)
                 }
             }
             .padding(16)
@@ -24,6 +28,8 @@ public struct BoardView: View {
 
 struct ColumnView: View {
     let column: BoardColumn
+    var onMove: ((String, WorkflowState) -> Void)?
+    @State private var targeted = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -38,6 +44,7 @@ struct ColumnView: View {
             }
             ForEach(column.stories, id: \.id) { story in
                 StoryCardView(story: story)
+                    .draggable(story.id)
             }
             Spacer(minLength: 0)
         }
@@ -47,8 +54,14 @@ struct ColumnView: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(column.state.accent.opacity(0.4), lineWidth: 1)
+                .stroke(column.state.accent.opacity(targeted ? 0.9 : 0.4),
+                        lineWidth: targeted ? 2 : 1)
         )
+        .dropDestination(for: String.self) { ids, _ in
+            guard let id = ids.first, let onMove else { return false }
+            onMove(id, column.state)
+            return true
+        } isTargeted: { targeted = $0 }
     }
 }
 
