@@ -75,6 +75,7 @@ export function loadTaskList(
        ORDER BY
          CASE t.status WHEN 'in_progress' THEN 0 WHEN 'todo' THEN 1
                        WHEN 'review' THEN 2 WHEN 'backlog' THEN 3 ELSE 4 END,
+         t.position ASC,
          CASE t.priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END,
          t.due_date IS NULL, t.due_date ASC,
          t.id DESC

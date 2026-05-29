@@ -163,6 +163,75 @@ export function archiveTask(db: Database.Database, id: number): boolean {
   return r.changes > 0;
 }
 
+/**
+ * Reorder a task within its board+status column by swapping `position` with
+ * the adjacent same-status sibling ('up' = previous, 'down' = next in the
+ * board's display order). The board renders columns ordered by
+ * (position ASC, id DESC) — this mirrors that exactly so a move lands the
+ * card in the visually-adjacent slot.
+ *
+ * On the first move in a column where every task still has the default
+ * position 0, positions are densely renumbered (0..n-1) in display order so
+ * there is something to swap against. Returns false if the task is missing
+ * or already at the column edge (caller treats that as a benign no-op).
+ */
+export function moveTask(
+  db: Database.Database,
+  id: number,
+  direction: 'up' | 'down',
+): boolean {
+  const cur = db
+    .prepare(`SELECT id, board_id, status FROM tasks WHERE id = ? AND archived_at IS NULL`)
+    .get(id) as { id: number; board_id: number; status: string } | undefined;
+  if (!cur) return false;
+
+  const tx = db.transaction((): boolean => {
+    // Normalize ties: if the column shares one position value (default 0),
+    // assign dense positions in display order so a swap is meaningful.
+    const col = db
+      .prepare(
+        `SELECT id, position FROM tasks
+         WHERE board_id = ? AND status = ? AND archived_at IS NULL
+         ORDER BY position ASC, id DESC`,
+      )
+      .all(cur.board_id, cur.status) as { id: number; position: number }[];
+    if (col.length < 2) return false; // nothing to swap with
+    const allSame = col.every((r) => r.position === col[0].position);
+    if (allSame) {
+      const upd = db.prepare(`UPDATE tasks SET position = ? WHERE id = ?`);
+      col.forEach((r, i) => upd.run(i, r.id)); // 0..n-1 in display order
+    }
+
+    const me = db.prepare(`SELECT position FROM tasks WHERE id = ?`).get(id) as { position: number };
+
+    // Adjacent sibling, matching the board's (position ASC, id DESC) order.
+    const neighbor = (direction === 'up'
+      ? db.prepare(
+          `SELECT id, position FROM tasks
+           WHERE board_id = ? AND status = ? AND archived_at IS NULL
+             AND (position < ? OR (position = ? AND id > ?))
+           ORDER BY position DESC, id ASC LIMIT 1`,
+        )
+      : db.prepare(
+          `SELECT id, position FROM tasks
+           WHERE board_id = ? AND status = ? AND archived_at IS NULL
+             AND (position > ? OR (position = ? AND id < ?))
+           ORDER BY position ASC, id DESC LIMIT 1`,
+        )
+    ).get(cur.board_id, cur.status, me.position, me.position, id) as
+      | { id: number; position: number }
+      | undefined;
+    if (!neighbor) return false; // at the column edge
+
+    const swap = db.prepare(`UPDATE tasks SET position = ?, updated_at = datetime('now') WHERE id = ?`);
+    swap.run(neighbor.position, id);
+    swap.run(me.position, neighbor.id);
+    return true;
+  });
+
+  return tx();
+}
+
 // ── http handler ──────────────────────────────────────────────────────
 
 async function readBody(req: http.IncomingMessage, maxBytes = 1_000_000): Promise<string> {
@@ -189,6 +258,7 @@ function sendJson(res: http.ServerResponse, code: number, body: unknown): void {
 }
 
 const TASK_BY_ID_RE = /^\/api\/tasks\/(\d+)\/?$/;
+const TASK_MOVE_RE = /^\/api\/tasks\/(\d+)\/move\/?$/;
 
 export async function tasksApiHandler(
   req: http.IncomingMessage,
@@ -213,6 +283,31 @@ export async function tasksApiHandler(
     } catch (err: any) {
       const code = (err as Error & { code?: string }).code === 'VALIDATION' ? 400 : 500;
       sendJson(res, code, { error: err?.message ?? String(err) });
+    }
+    return true;
+  }
+
+  const mv = url.match(TASK_MOVE_RE);
+  if (mv && method === 'POST') {
+    const moveId = Number(mv[1]);
+    let body: any;
+    try {
+      const raw = await readBody(req);
+      body = raw ? JSON.parse(raw) : {};
+    } catch (err: any) {
+      sendJson(res, 400, { error: `invalid JSON body: ${err?.message ?? err}` });
+      return true;
+    }
+    const dir = body?.direction;
+    if (dir !== 'up' && dir !== 'down') {
+      sendJson(res, 400, { error: "direction must be 'up' or 'down'" });
+      return true;
+    }
+    try {
+      const moved = moveTask(db, moveId, dir);
+      sendJson(res, 200, { ok: true, moved });
+    } catch (err: any) {
+      sendJson(res, 500, { error: err?.message ?? String(err) });
     }
     return true;
   }
