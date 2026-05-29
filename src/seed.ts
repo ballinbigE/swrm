@@ -53,7 +53,8 @@ export function seedDefaults(
   }
 
   const insertBoard = db.prepare(
-    `INSERT INTO boards (slug, name, color, position) VALUES (?, ?, ?, ?)
+    `INSERT INTO boards (slug, name, color, position, project_id)
+     VALUES (?, ?, ?, ?, (SELECT id FROM projects WHERE slug='default'))
      ON CONFLICT(slug) DO NOTHING`,
   );
   // SQLite treats NULL as not-equal-to-NULL in UNIQUE indexes, so a global
