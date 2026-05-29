@@ -37,6 +37,7 @@ import { whatsNewHandler } from './views/whats_new';
 import { settingsHandler } from './views/settings';
 import { versionApiHandler } from './api/version';
 import { boardPrefsHandler } from './api/board_prefs';
+import { projectsApiHandler } from './api/projects';
 import { skillsApiHandler } from './api/skills';
 import { skillsViewHandler } from './views/skills';
 import { syncSkillsDir } from './skills/sync';
@@ -68,6 +69,9 @@ async function main(): Promise<void> {
     // eslint-disable-next-line no-console
     console.log(`[swrm] applied ${migrate.applied.length} migration(s)`);
   }
+
+  // 1b. replace the sentinel root_path in the default project (idempotent)
+  db.prepare(`UPDATE projects SET root_path = ? WHERE root_path = '__SWRM_ROOT__'`).run(ROOT);
 
   // 2. seed-if-empty
   const seed = seedDefaults(db);
@@ -142,6 +146,7 @@ async function main(): Promise<void> {
   const server = http.createServer(async (req, res) => {
     if (faviconHandler(req, res)) return;
     if (versionApiHandler(req, res)) return;
+    if (await projectsApiHandler(req, res, db)) return;
     if (whatsNewHandler(req, res)) return;
     if (boardsApiHandler(req, res, db)) return;
     // Nested-under-task routes first — subtasks, labels, attempts all mount
