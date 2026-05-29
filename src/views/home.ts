@@ -14,6 +14,8 @@ import * as http from 'node:http';
 
 import type Database from 'better-sqlite3';
 
+import { appVersion } from '../version';
+
 function esc(s: string | number | null | undefined): string {
   if (s === null || s === undefined) return '';
   return String(s)
@@ -38,6 +40,21 @@ body { margin: 0; font: 14px/1.5 -apple-system, system-ui, sans-serif;
 .topbar a { background: transparent; color: #8b8f9b; border: 1px solid #2a2e38;
             border-radius: 4px; padding: 4px 8px; font: inherit; text-decoration: none }
 .topbar a:hover { color: #e8e6e3 }
+.version-badge { color: #F5A623; font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+                 text-decoration: none; padding: 2px 7px; border: 1px solid #3a2e10;
+                 border-radius: 10px; background: #1e1a0e }
+.version-badge:hover { background: #2a2410; color: #FFC24B; border-color: #5a4a1a }
+#whats-new-banner { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                    background: #1e1a0e; color: #F3E9D2; border: 1px solid #F5A623;
+                    border-radius: 8px; padding: 10px 16px; font-size: 13px; z-index: 300;
+                    box-shadow: 0 6px 24px rgba(0,0,0,0.5); white-space: nowrap;
+                    display: none; align-items: center; gap: 12px }
+#whats-new-banner[data-shown="1"] { display: flex }
+#whats-new-banner a { color: #F5A623; text-decoration: none; font-weight: 600 }
+#whats-new-banner a:hover { color: #FFC24B }
+#whats-new-banner .dismiss { background: none; border: none; color: #6b6050; font-size: 16px;
+                              cursor: pointer; padding: 0 2px; line-height: 1 }
+#whats-new-banner .dismiss:hover { color: #F3E9D2 }
 main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 18px }
 .hero { width: 100%; max-width: 680px; text-align: center }
 .wordmark { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px 0 }
@@ -93,8 +110,11 @@ main { flex: 1; display: flex; align-items: center; justify-content: center; pad
 .toast-success { background: #15321e; color: #4ade80; border: 1px solid #1e5a3a }
 `;
 
-export function renderHomeHtml(opts: { hasApiKey: boolean } = { hasApiKey: false }): string {
+export function renderHomeHtml(
+  opts: { hasApiKey: boolean; version?: string } = { hasApiKey: false },
+): string {
   const hasApiKey = opts.hasApiKey === true;
+  const version = opts.version ?? '0.0.0';
   const disabledAttr = hasApiKey ? '' : ' disabled';
   const helperLine = hasApiKey
     ? `Describe your build, then hit <b>Generate &amp; Execute</b> — Swrm breaks it into Ralph-loop-ready stories.`
@@ -109,6 +129,7 @@ export function renderHomeHtml(opts: { hasApiKey: boolean } = { hasApiKey: false
 <header class="topbar">
   <div class="brand">Swrm <span class="slash">/</span> <span class="title">home</span></div>
   <div class="spacer"></div>
+  <a class="version-badge" href="/whats-new">v${esc(version)}</a>
   <a href="/tasks">tasks</a>
   <a href="/board">board</a>
   <a href="/skills">skills</a>
@@ -145,6 +166,11 @@ export function renderHomeHtml(opts: { hasApiKey: boolean } = { hasApiKey: false
 </main>
 
 <div id="toast" hidden></div>
+
+<div id="whats-new-banner" role="status" aria-live="polite">
+  🐝 What's new in <a href="/whats-new">v${esc(version)}</a> →
+  <button class="dismiss" id="banner-dismiss" aria-label="Dismiss">×</button>
+</div>
 
 <script>
 const HAS_API_KEY = ${hasApiKey ? 'true' : 'false'};
@@ -295,6 +321,32 @@ async function saveAndSpawn() {
 document.getElementById('idea-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && HAS_API_KEY) generatePlan();
 });
+
+// What's New banner — auto-show once per version.
+(function() {
+  const CURRENT_VERSION = ${JSON.stringify(version)};
+  const STORAGE_KEY = 'swrm_seen_version';
+  const banner = document.getElementById('whats-new-banner');
+  const dismiss = document.getElementById('banner-dismiss');
+  if (!banner || !dismiss) return;
+  try {
+    const seen = localStorage.getItem(STORAGE_KEY);
+    if (seen !== CURRENT_VERSION) {
+      banner.dataset.shown = '1';
+    }
+  } catch (_) { /* localStorage unavailable — skip banner */ }
+  dismiss.addEventListener('click', function() {
+    banner.dataset.shown = '0';
+    try { localStorage.setItem(STORAGE_KEY, CURRENT_VERSION); } catch (_) {}
+  });
+  // Also mark seen when the user navigates to the whats-new page via the link.
+  const link = banner.querySelector('a');
+  if (link) {
+    link.addEventListener('click', function() {
+      try { localStorage.setItem(STORAGE_KEY, CURRENT_VERSION); } catch (_) {}
+    });
+  }
+})();
 </script>
 </body></html>`;
 }
@@ -315,7 +367,8 @@ export async function homeHandler(
   // without changing the router-facing signature.
   void _db;
   const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
+  const version = appVersion();
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-  res.end(renderHomeHtml({ hasApiKey }));
+  res.end(renderHomeHtml({ hasApiKey, version }));
   return true;
 }
