@@ -13,6 +13,11 @@ public enum LoadState: Equatable {
 
 /// Owns the selected folder, loads/derives the board, and live-refreshes it as
 /// the underlying `.swrm/stories/*.md` files change. Read-only (Slice A).
+///
+/// `@MainActor`: every path mutates the `@Published` properties, which Combine
+/// requires on the main thread. The watcher already hops to main before calling
+/// back; this annotation makes the guarantee compile-time.
+@MainActor
 public final class BoardModel: ObservableObject {
     @Published public private(set) var state: LoadState = .idle
     @Published public private(set) var folderName: String?
@@ -66,7 +71,11 @@ public final class BoardModel: ObservableObject {
         watcher?.stop(); watcher = nil
         scopedURL?.stopAccessingSecurityScopedResource(); scopedURL = nil
 
-        // Needed for iOS document-picker URLs; harmless `false` for plain URLs.
+        // Needed for iOS document-picker URLs; harmless `false` for plain/non-
+        // sandboxed URLs (macOS dev build), so we deliberately do NOT treat a
+        // `false` return as an error here.
+        // TODO(distribution slice): once the app is sandboxed, a `false` here is
+        // a genuine access denial and should surface `state = .error(...)`.
         if pickedFolder.startAccessingSecurityScopedResource() {
             scopedURL = pickedFolder
         }

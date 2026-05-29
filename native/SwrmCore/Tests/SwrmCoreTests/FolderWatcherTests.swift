@@ -16,6 +16,7 @@ final class FolderWatcherTests: XCTestCase {
 
     func testFiresOnChangeWhenFileAdded() {
         let expectation = expectation(description: "onChange fires")
+        expectation.assertForOverFulfill = false  // atomic writes emit >1 FS event
         let watcher = FolderWatcher(url: dir, debounceInterval: 0.05) {
             expectation.fulfill()
         }

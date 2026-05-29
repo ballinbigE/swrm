@@ -3,7 +3,15 @@ import XCTest
 import SwrmCore
 import Combine
 
+@MainActor
 final class BoardModelTests: XCTestCase {
+    private var createdDirs: [URL] = []
+
+    override func tearDownWithError() throws {
+        for dir in createdDirs { try? FileManager.default.removeItem(at: dir) }
+        createdDirs = []
+    }
+
     func testInitialStateIsIdle() {
         let model = BoardModel(bookmarkStore: BookmarkStore(defaults: Self.scratchDefaults()))
         XCTAssertEqual(model.state, .idle)
@@ -13,6 +21,7 @@ final class BoardModelTests: XCTestCase {
         let dir = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("swrm-board-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        createdDirs.append(dir)
         for (i, md) in markdown.enumerated() {
             try md.write(to: dir.appendingPathComponent("sc-\(i + 1).md"),
                          atomically: true, encoding: .utf8)
@@ -95,6 +104,7 @@ final class BoardModelTests: XCTestCase {
         model.openFolder(dir)
 
         let expectation = expectation(description: "board grows to 2 stories")
+        expectation.assertForOverFulfill = false
         var cancellable: AnyCancellable?
         cancellable = model.$state.sink { state in
             if case let .loaded(board) = state,

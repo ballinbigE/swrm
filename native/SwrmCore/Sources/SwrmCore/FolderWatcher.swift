@@ -9,7 +9,6 @@ public final class FolderWatcher {
     private let debounceInterval: TimeInterval
     private let queue = DispatchQueue(label: "swrm.folderwatcher")
     private var source: DispatchSourceFileSystemObject?
-    private var fileDescriptor: Int32 = -1
     private var debounceWork: DispatchWorkItem?
 
     public init(url: URL, debounceInterval: TimeInterval = 0.2, onChange: @escaping () -> Void) {
@@ -24,17 +23,16 @@ public final class FolderWatcher {
         stop()
         let fd = open(url.path, O_EVTONLY)
         guard fd >= 0 else { return }
-        fileDescriptor = fd
         let src = DispatchSource.makeFileSystemObjectSource(
             fileDescriptor: fd,
             eventMask: [.write, .delete, .rename, .extend],
             queue: queue
         )
         src.setEventHandler { [weak self] in self?.scheduleChange() }
-        src.setCancelHandler { [weak self] in
-            if let fd = self?.fileDescriptor, fd >= 0 { close(fd) }
-            self?.fileDescriptor = -1
-        }
+        // Capture fd by value: cancel() runs this handler asynchronously, and on a
+        // deinit-triggered stop() `self` is already nil — a `[weak self]` guard
+        // would skip the close and leak the descriptor.
+        src.setCancelHandler { close(fd) }
         source = src
         src.resume()
     }
