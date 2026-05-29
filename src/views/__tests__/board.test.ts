@@ -91,6 +91,29 @@ describe('renderBoardHtml', () => {
     const html = renderBoardHtml([row({ priority: 'high' })]);
     expect(html).toMatch(/class="card card-pri-high"/);
   });
+
+  it('renders ↑/↓ reorder buttons that POST to the move endpoint', () => {
+    const html = renderBoardHtml([row({ id: 12 })]);
+    expect(html).toMatch(/class="mv" data-dir="up" data-id="12"/);
+    expect(html).toMatch(/class="mv" data-dir="down" data-id="12"/);
+    expect(html).toContain("'/api/tasks/' + btn.dataset.id + '/move'");
+  });
+
+  it('renders the legend dialog + ⚡ button + label rows, toggled by ?', () => {
+    const html = renderBoardHtml([], { legendLabels: [{ name: 'feature', color: '#60a5fa' }] });
+    expect(html).toContain('<dialog id="legend"');
+    expect(html).toContain('⚡ legend');
+    expect(html).toContain("e.key === '?'");
+    // legend lists the provided labels
+    expect(html).toMatch(/label-chip[^>]*#60a5fa[^>]*>feature/);
+  });
+
+  it('renders a quick-add input wired to n + active board id', () => {
+    const html = renderBoardHtml([], { activeBoardId: 7 });
+    expect(html).toContain('id="quick-add"');
+    expect(html).toContain("e.key === 'n'");
+    expect(html).toContain('const ACTIVE_BOARD_ID = 7;');
+  });
 });
 
 describe('parseLabels', () => {

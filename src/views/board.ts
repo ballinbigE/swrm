@@ -100,7 +100,30 @@ body { margin: 0; font: 13px/1.45 -apple-system, system-ui, sans-serif; color: #
 .toast-info { background: #1e3a5a; color: #93c5fd }
 .toast-success { background: #15321e; color: #4ade80 }
 .touch-note { display: none; color: #6b7280; font-size: 11px; padding: 4px 18px }
-@media (hover: none) { .touch-note { display: block } .card { cursor: default } }
+@media (hover: none) { .touch-note { display: block } .card { cursor: default } .card-move { opacity: 1 } }
+.card-move { display: flex; gap: 4px; margin-top: 6px; opacity: 0; transition: opacity .12s }
+.card:hover .card-move { opacity: 1 }
+.mv { background: #1a1d24; color: #8b8f9b; border: 1px solid #2a2e38; border-radius: 3px;
+      font-size: 11px; line-height: 1; padding: 2px 7px; cursor: pointer }
+.mv:hover { color: #e8e6e3; border-color: #3a3f4b }
+.topbar-btn { background: transparent; color: #8b8f9b; border: 1px solid #2a2e38; border-radius: 4px;
+              padding: 4px 9px; font: inherit; cursor: pointer }
+.topbar-btn:hover { color: #e8e6e3 }
+.quick-add { width: 100%; background: #0f1115; color: #e8e6e3; border: 1px dashed #2a2e38;
+             border-radius: 5px; padding: 7px 9px; font: inherit; margin-bottom: 8px }
+.quick-add[hidden] { display: none }
+.quick-add:focus { outline: none; border-color: #d97757; border-style: solid }
+dialog.legend { background: #15171c; color: #e8e6e3; border: 1px solid #232730; border-radius: 10px;
+                max-width: 440px; width: 90%; padding: 18px 20px; box-shadow: 0 12px 48px rgba(0,0,0,0.5) }
+dialog.legend::backdrop { background: rgba(0,0,0,0.6) }
+dialog.legend h3 { margin: 0 0 4px; font-size: 14px }
+dialog.legend h4 { margin: 14px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #8b8f9b }
+dialog.legend .dim { color: #6b7280; font-weight: 400; font-size: 11px }
+.lg-row { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 2px 0; color: #c8ccd6 }
+.lg-row .stripe { width: 12px; height: 12px; border-radius: 2px; flex: none }
+.lg-row .stripe.hi { background: #ef5350 } .lg-row .stripe.med { background: #fb923c } .lg-row .stripe.lo { background: #3a3f4b }
+.lg-row kbd { background: #0c0d10; border: 1px solid #2a2e38; border-radius: 3px; padding: 1px 6px; font: 11px ui-monospace, monospace }
+dialog.legend .btn-ghost { margin-top: 16px; background: transparent; color: #8b8f9b; border: 1px solid #2a2e38; border-radius: 4px; padding: 5px 11px; cursor: pointer; font: inherit }
 `;
 
 interface Row {
@@ -122,6 +145,10 @@ export interface BoardViewOpts {
   activeSlug?: string;
   /** All boards for the switcher dropdown. */
   boards?: { slug: string; name: string }[];
+  /** All labels (name+color) for the legend reference panel. */
+  legendLabels?: { name: string; color: string }[];
+  /** Active board id — quick-add posts new tasks onto this board. */
+  activeBoardId?: number;
 }
 
 export function renderBoardHtml(rows: Row[], opts: BoardViewOpts = {}): string {
@@ -146,6 +173,27 @@ export function renderBoardHtml(rows: Row[], opts: BoardViewOpts = {}): string {
       </select>`
     : '';
 
+  const labelRows = (opts.legendLabels ?? [])
+    .map((l) => `<div class="lg-row"><span class="label-chip" style="color:${esc(l.color)};border-color:${esc(l.color)}">${esc(l.name)}</span></div>`)
+    .join('') || '<div class="lg-row dim">no labels yet</div>';
+  const legendDialog = `<dialog id="legend" class="legend">
+    <h3>Legend <span class="dim">· press Esc to close</span></h3>
+    <h4>Priority (card stripe)</h4>
+    <div class="lg-row"><span class="stripe hi"></span> high</div>
+    <div class="lg-row"><span class="stripe med"></span> medium</div>
+    <div class="lg-row"><span class="stripe lo"></span> low</div>
+    <h4>Labels</h4>
+    ${labelRows}
+    <h4>Badges</h4>
+    <div class="lg-row"><span class="badge">N att</span> agent attempts run on this task</div>
+    <div class="lg-row"><span class="badge open">N open</span> unresolved review comments</div>
+    <h4>Keyboard &amp; moves</h4>
+    <div class="lg-row"><kbd>?</kbd> toggle this panel</div>
+    <div class="lg-row"><kbd>n</kbd> new task in the first column</div>
+    <div class="lg-row">↑ / ↓ on a card reorder it · drag a card to another column to change status</div>
+    <form method="dialog"><button class="btn-ghost">close</button></form>
+  </dialog>`;
+
   const colsHtml = COLUMNS.map((col) => {
     const cards = (byStatus.get(col.key) ?? [])
       .map((r) => {
@@ -162,13 +210,20 @@ export function renderBoardHtml(rows: Row[], opts: BoardViewOpts = {}): string {
           <div class="title"><a href="/workspace/${r.id}">${esc(r.title)}</a></div>
           ${chips ? `<div class="labels">${chips}</div>` : ''}
           ${badges.length ? `<div class="meta">${badges.join('')}</div>` : ''}
+          <div class="card-move">
+            <button class="mv" data-dir="up" data-id="${r.id}" draggable="false" title="Move up" aria-label="Move up">↑</button>
+            <button class="mv" data-dir="down" data-id="${r.id}" draggable="false" title="Move down" aria-label="Move down">↓</button>
+          </div>
         </article>`;
       })
       .join('');
     const body = cards || '<div class="empty">— empty —</div>';
+    const quickAdd = col.key === firstCol
+      ? `<input class="quick-add" id="quick-add" hidden placeholder="New task title — Enter to add, Esc to cancel" />`
+      : '';
     return `<section class="col" data-col="${col.key}">
       <header class="col-head"><h2>${col.label}</h2><span class="n">${(byStatus.get(col.key) ?? []).length}</span></header>
-      <div class="col-body">${body}</div>
+      <div class="col-body">${quickAdd}${body}</div>
     </section>`;
   }).join('');
 
@@ -183,6 +238,7 @@ export function renderBoardHtml(rows: Row[], opts: BoardViewOpts = {}): string {
   <div class="brand">Swrm <span class="slash">/</span> <span class="title">board</span></div>
   ${switcher}
   <div class="spacer"></div>
+  <button class="topbar-btn" onclick="document.getElementById('legend').showModal()" title="Legend &amp; shortcuts (press ?)">⚡ legend</button>
   <a href="/">home</a>
   <a href="/tasks">tasks</a>
   <a href="/skills">skills</a>
@@ -190,6 +246,7 @@ export function renderBoardHtml(rows: Row[], opts: BoardViewOpts = {}): string {
 </header>
 <div class="touch-note">Drag-to-execute is disabled on touch devices — open a task and use the Spawn button.</div>
 <main class="board">${colsHtml}</main>
+${legendDialog}
 <div id="toast" hidden></div>
 <script>
 let toastTimer = null;
@@ -257,6 +314,54 @@ async function moveTask(taskId, fromStatus, toStatus) {
   }
   setTimeout(() => location.reload(), 700);
 }
+
+// ── reorder buttons (↑/↓) — swap position with the adjacent sibling ──
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.mv');
+  if (!btn) return;
+  e.stopPropagation();
+  const res = await fetch('/api/tasks/' + btn.dataset.id + '/move', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ direction: btn.dataset.dir }),
+  });
+  if (!res.ok) { showToast('move failed', 'error'); return; }
+  const j = await res.json();
+  if (j.moved) location.reload(); else showToast('already at the edge', 'info');
+});
+
+// ── keyboard: ? toggles the legend, n opens quick-add ──
+const ACTIVE_BOARD_ID = ${opts.activeBoardId ?? 'null'};
+document.addEventListener('keydown', (e) => {
+  if (e.target.matches('input, textarea, select')) {
+    if (e.key === 'Escape' && e.target.id === 'quick-add') { e.target.value = ''; e.target.hidden = true; e.target.blur(); }
+    return;
+  }
+  const dlg = document.getElementById('legend');
+  if (e.key === '?') { e.preventDefault(); dlg.open ? dlg.close() : dlg.showModal(); return; }
+  if (e.key === 'n') {
+    e.preventDefault();
+    const qa = document.getElementById('quick-add');
+    if (qa) { qa.hidden = false; qa.focus(); }
+  }
+});
+
+// ── quick-add: Enter creates a backlog task on the active board ──
+const quickAddEl = document.getElementById('quick-add');
+if (quickAddEl) {
+  quickAddEl.addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter') return;
+    const title = quickAddEl.value.trim();
+    if (!title) { quickAddEl.hidden = true; return; }
+    const body = { title: title, status: 'backlog' };
+    if (ACTIVE_BOARD_ID != null) body.board_id = ACTIVE_BOARD_ID;
+    const res = await fetch('/api/tasks', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) { showToast('add failed', 'error'); return; }
+    location.reload();
+  });
+}
 </script>
 </body></html>`;
 }
@@ -277,11 +382,15 @@ export async function boardHandler(
   }
 
   const allBoards = db
-    .prepare(`SELECT slug, name, color, workflow FROM boards ORDER BY position, id`)
-    .all() as { slug: string; name: string; color: string; workflow: string }[];
+    .prepare(`SELECT id, slug, name, color, workflow FROM boards ORDER BY position, id`)
+    .all() as { id: number; slug: string; name: string; color: string; workflow: string }[];
 
   const wantSlug = reqUrl.searchParams.get('board');
   const active = (wantSlug && allBoards.find((b) => b.slug === wantSlug)) || allBoards[0];
+
+  const legendLabels = db
+    .prepare(`SELECT name, color FROM labels ORDER BY name`)
+    .all() as { name: string; color: string }[];
 
   // Scope tasks to the active board when one exists; else show everything.
   const rows = (active
@@ -294,7 +403,9 @@ export async function boardHandler(
       workflow: active ? parseWorkflow(active.workflow) : undefined,
       color: active?.color,
       activeSlug: active?.slug,
+      activeBoardId: active?.id,
       boards: allBoards.map((b) => ({ slug: b.slug, name: b.name })),
+      legendLabels,
     }),
   );
   return true;
