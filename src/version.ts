@@ -22,10 +22,10 @@ export function appVersion(): string {
 
 /** Canonical What's New content for the current release. */
 export const WHATS_NEW = {
-  version: '0.5.0',
-  title: 'swrm v0.5.0 — Git-Backed Moves',
+  version: '0.6.0',
+  title: 'swrm v0.6.0 — Connect GitHub',
   notes: [
-    '🔗 **Every move is a commit.** Drag a card on the Mac board and swrm commits the `.md` change for you — like `sc-3: backlog → started`. One clean commit per move.',
-    '🧊 **Best-effort, never in the way.** No git repo? The move still saves, just without a commit. (Mac only — git isn\'t on iOS.)',
+    '🔌 **Connect your GitHub.** Settings → paste a fine-grained token → "Connected as @you". The token lives in the Keychain and nowhere else.',
+    '🧱 **The key to the good stuff.** This unlocks what\'s next — live CI badges, push, and pull requests, straight from the board.',
   ],
 } as const;
