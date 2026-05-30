@@ -89,6 +89,9 @@ public final class BoardModel: ObservableObject {
         currentProjectID = first.id
     }
 
+    /// The resolved stories directory currently loaded (for repo/CI lookups). nil if none open.
+    public var storiesDirectory: URL? { currentStoriesDir }
+
     /// Manual re-read of the current folder (refresh button + iOS foreground).
     public func refresh() {
         guard let dir = currentStoriesDir else { return }
