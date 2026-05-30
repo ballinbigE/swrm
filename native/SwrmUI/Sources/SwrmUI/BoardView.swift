@@ -7,17 +7,19 @@ import SwrmCore
 public struct BoardView: View {
     public let board: Board
     public var onMove: ((String, WorkflowState) -> Void)?
+    public var onStartWork: ((Story) -> Void)?
 
-    public init(board: Board, onMove: ((String, WorkflowState) -> Void)? = nil) {
+    public init(board: Board, onMove: ((String, WorkflowState) -> Void)? = nil, onStartWork: ((Story) -> Void)? = nil) {
         self.board = board
         self.onMove = onMove
+        self.onStartWork = onStartWork
     }
 
     public var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: 16) {
                 ForEach(board.columns, id: \.state) { column in
-                    ColumnView(column: column, onMove: onMove)
+                    ColumnView(column: column, onMove: onMove, onStartWork: onStartWork)
                 }
             }
             .padding(16)
@@ -29,6 +31,7 @@ public struct BoardView: View {
 struct ColumnView: View {
     let column: BoardColumn
     var onMove: ((String, WorkflowState) -> Void)?
+    var onStartWork: ((Story) -> Void)?
     @State private var targeted = false
 
     var body: some View {
@@ -45,6 +48,11 @@ struct ColumnView: View {
             ForEach(column.stories, id: \.id) { story in
                 StoryCardView(story: story)
                     .draggable(story.id)
+                    .contextMenu {
+                        if let onStartWork {
+                            Button { onStartWork(story) } label: { Label("Start work", systemImage: "arrow.branch") }
+                        }
+                    }
             }
             Spacer(minLength: 0)
         }

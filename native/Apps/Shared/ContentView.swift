@@ -7,6 +7,7 @@ struct ContentView: View {
     @StateObject private var account = AccountModel()
     @StateObject private var ci = CIStatusModel()
     @StateObject private var pushPR = PushPRModel()
+    @StateObject private var branch = BranchModel()
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
     @State private var isPickingFolder = false
@@ -18,11 +19,25 @@ struct ContentView: View {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
     }
 
+    private var startWorkHandler: ((Story) -> Void)? {
+        #if os(macOS)
+        return { story in branch.startWork(story: story, dir: model.storiesDirectory) }
+        #else
+        return nil
+        #endif
+    }
+
     var body: some View {
         NavigationStack {
             content
                 .navigationTitle(model.folderName ?? "Swrm")
                 .task(id: model.folderName) { await ci.refresh(dir: model.storiesDirectory) }
+                .alert("Start work", isPresented: Binding(
+                    get: { branch.lastResult != nil },
+                    set: { if !$0 { branch.clear() } }
+                )) {
+                    Button("OK", role: .cancel) { }
+                } message: { Text(branch.lastResult ?? "") }
                 .alert("Push & PR", isPresented: Binding(
                     get: {
                         switch pushPR.state { case .opened, .error: return true; default: return false }
@@ -99,7 +114,7 @@ struct ContentView: View {
             ProgressView("Reading stories…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .loaded(let board):
-            BoardView(board: board, onMove: { id, newState in model.moveStory(id, to: newState) })
+            BoardView(board: board, onMove: { id, newState in model.moveStory(id, to: newState) }, onStartWork: startWorkHandler)
         case .empty:
             MessageView(
                 icon: "📭",
