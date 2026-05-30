@@ -95,20 +95,25 @@ public final class BoardModel: ObservableObject {
         reload(storiesDir: dir)
     }
 
-    /// Move a story to a new column (changes its `state`), written back to disk.
-    /// Optimistic with revert-to-error on write failure; the resulting self-write
-    /// reload is suppressed once so the board doesn't flicker.
+    /// Move a story to a new column (changes its `state`), written back to disk and,
+    /// on macOS in a git repo, committed (best-effort). Optimistic with revert-to-error
+    /// on write failure; commit failures are swallowed (the file is the source of truth).
     public func moveStory(_ id: String, to newState: WorkflowState) {
         guard case let .loaded(board) = state, let dir = currentStoriesDir else { return }
         var all = board.columns.flatMap { $0.stories }
         guard let idx = all.firstIndex(where: { $0.id == id }) else { return }
-        if all[idx].state == newState { return }
+        let oldState = all[idx].state
+        if oldState == newState { return }
 
         all[idx].state = newState
         state = .loaded(Board(stories: all))   // optimistic
         suppressNextReload = true
         do {
-            try writer.setState(storyID: id, to: newState, in: dir)
+            let fileURL = try writer.setState(storyID: id, to: newState, in: dir)
+            #if os(macOS)
+            let message = "\(id): \(oldState.rawValue) → \(newState.rawValue)"
+            Task.detached { _ = try? GitCommitter().commit(file: fileURL, message: message) }
+            #endif
         } catch {
             suppressNextReload = false
             state = .error("Couldn't save move")

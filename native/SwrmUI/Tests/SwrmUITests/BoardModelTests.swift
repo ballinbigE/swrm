@@ -228,6 +228,47 @@ final class BoardModelTests: XCTestCase {
         if case .error = model.state { } else { XCTFail("expected .error, got \(model.state)") }
     }
 
+#if os(macOS)
+    @discardableResult
+    private func runGit(_ args: [String], in dir: URL) -> String {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+        p.arguments = ["-C", dir.path] + args
+        let out = Pipe(); p.standardOutput = out; p.standardError = Pipe()
+        try? p.run(); p.waitUntilExit()
+        return String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+    }
+
+    func testMoveCommitsInGitRepo() throws {
+        let dir = try makeStoriesDir(["---\nid: sc-1\nstate: backlog\n---\nx"])
+        runGit(["init"], in: dir)
+        runGit(["config", "user.email", "t@t.test"], in: dir)
+        runGit(["config", "user.name", "Tester"], in: dir)
+        runGit(["add", "-A"], in: dir); runGit(["commit", "-m", "init"], in: dir)
+
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
+        model.openFolder(dir)
+        model.moveStory("sc-1", to: .started)
+
+        // commit is fired in a detached Task — poll the log briefly
+        var subject = ""
+        for _ in 0..<50 {
+            subject = runGit(["log", "-1", "--format=%s"], in: dir).trimmingCharacters(in: .whitespacesAndNewlines)
+            if subject == "sc-1: backlog → started" { break }
+            usleep(100_000)
+        }
+        XCTAssertEqual(subject, "sc-1: backlog → started")
+    }
+#endif
+
+    func testMoveInNonGitDirStillSucceeds() throws {
+        let dir = try makeStoriesDir(["---\nid: sc-1\nstate: backlog\n---\nx"])
+        let model = BoardModel(projectStore: ProjectStore(defaults: Self.scratchDefaults()))
+        model.openFolder(dir)
+        model.moveStory("sc-1", to: .done)
+        XCTAssertEqual(stateOf(model.state, id: "sc-1"), .done) // no git, move still works
+    }
+
     // MARK: helpers
 
     static func scratchDefaults() -> UserDefaults {
