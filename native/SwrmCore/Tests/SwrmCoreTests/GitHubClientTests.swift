@@ -37,6 +37,24 @@ final class GitHubClientTests: XCTestCase {
         catch { XCTAssertEqual(error as? GitHubError, .decode) }
     }
 
+    func testDefaultBranch() async throws {
+        let c = client(status: 200, body: #"{"default_branch":"main"}"#)
+        let b = try await c.defaultBranch(owner: "o", repo: "r", token: "t")
+        XCTAssertEqual(b, "main")
+    }
+
+    func testOpenPullRequestReturnsRef() async throws {
+        let c = client(status: 201, body: #"{"number":7,"html_url":"https://github.com/o/r/pull/7"}"#)
+        let pr = try await c.openPullRequest(owner: "o", repo: "r", head: "feat", base: "main", title: "feat", token: "t")
+        XCTAssertEqual(pr, PullRequestRef(number: 7, htmlURL: "https://github.com/o/r/pull/7"))
+    }
+
+    func testOpenPullRequest422IsFriendlyError() async {
+        let c = client(status: 422, body: #"{"message":"Validation Failed"}"#)
+        do { _ = try await c.openPullRequest(owner: "o", repo: "r", head: "feat", base: "main", title: "feat", token: "t"); XCTFail() }
+        catch { if case let GitHubError.network(m) = error { XCTAssertTrue(m.contains("already exist")) } else { XCTFail("\(error)") } }
+    }
+
     func testCIStatusRollup() async throws {
         func runs(_ json: String) -> GitHubClient { client(status: 200, body: json) }
         // all completed/success

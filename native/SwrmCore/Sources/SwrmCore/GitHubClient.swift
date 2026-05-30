@@ -67,7 +67,46 @@ public struct GitHubClient {
         if runs.contains(where: { $0.status != "completed" }) { return .pending }
         return .success
     }
+
+    public func defaultBranch(owner: String, repo: String, token: String) async throws -> String {
+        var req = URLRequest(url: URL(string: "https://api.github.com/repos/\(owner)/\(repo)")!)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        req.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
+        let data: Data; let response: URLResponse
+        do { (data, response) = try await fetch(req) } catch { throw GitHubError.network(error.localizedDescription) }
+        guard let http = response as? HTTPURLResponse else { throw GitHubError.network("no response") }
+        if http.statusCode == 401 { throw GitHubError.unauthorized }
+        guard (200..<300).contains(http.statusCode) else { throw GitHubError.network("status \(http.statusCode)") }
+        struct Repo: Codable { let default_branch: String }
+        do { return try JSONDecoder().decode(Repo.self, from: data).default_branch } catch { throw GitHubError.decode }
+    }
+
+    public func openPullRequest(owner: String, repo: String, head: String, base: String, title: String, token: String) async throws -> PullRequestRef {
+        var req = URLRequest(url: URL(string: "https://api.github.com/repos/\(owner)/\(repo)/pulls")!)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        req.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["title": title, "head": head, "base": base])
+        let data: Data; let response: URLResponse
+        do { (data, response) = try await fetch(req) } catch { throw GitHubError.network(error.localizedDescription) }
+        guard let http = response as? HTTPURLResponse else { throw GitHubError.network("no response") }
+        if http.statusCode == 401 { throw GitHubError.unauthorized }
+        if http.statusCode == 422 { throw GitHubError.network("a pull request may already exist for this branch") }
+        guard (200..<300).contains(http.statusCode) else { throw GitHubError.network("status \(http.statusCode)") }
+        struct PR: Codable { let number: Int; let html_url: String }
+        do { let pr = try JSONDecoder().decode(PR.self, from: data); return PullRequestRef(number: pr.number, htmlURL: pr.html_url) }
+        catch { throw GitHubError.decode }
+    }
 }
 
 struct CheckRunsResponse: Codable { let check_runs: [CheckRun] }
 struct CheckRun: Codable { let status: String; let conclusion: String? }
+
+public struct PullRequestRef: Equatable {
+    public let number: Int
+    public let htmlURL: String
+    public init(number: Int, htmlURL: String) { self.number = number; self.htmlURL = htmlURL }
+}
