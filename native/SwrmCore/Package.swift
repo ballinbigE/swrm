@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "SwrmCore",
+    platforms: [.macOS(.v13), .iOS(.v16)],
     products: [
         .library(name: "SwrmCore", targets: ["SwrmCore"]),
     ],
