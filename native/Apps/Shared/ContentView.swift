@@ -5,6 +5,7 @@ import SwrmUI
 struct ContentView: View {
     @StateObject private var model = BoardModel()
     @StateObject private var account = AccountModel()
+    @StateObject private var ci = CIStatusModel()
     @Environment(\.scenePhase) private var scenePhase
     @State private var isPickingFolder = false
     @AppStorage("swrm.lastSeenWhatsNew") private var lastSeenWhatsNew = ""
@@ -19,6 +20,7 @@ struct ContentView: View {
         NavigationStack {
             content
                 .navigationTitle(model.folderName ?? "Swrm")
+                .task(id: model.folderName) { await ci.refresh(dir: model.storiesDirectory) }
                 .toolbar {
                     ToolbarItemGroup {
                         Button {
@@ -27,6 +29,7 @@ struct ContentView: View {
                             Label("Refresh", systemImage: "arrow.clockwise")
                         }
                         ProjectSwitcherMenu(model: model, onOpenNew: { isPickingFolder = true })
+                        CIBadge(status: ci.status) { Task { await ci.refresh(dir: model.storiesDirectory) } }
                         Button { showSettings = true } label: { Label("Settings", systemImage: "gearshape") }
                     }
                     ToolbarItem(placement: .automatic) {
