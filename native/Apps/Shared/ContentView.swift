@@ -4,10 +4,12 @@ import SwrmUI
 
 struct ContentView: View {
     @StateObject private var model = BoardModel()
+    @StateObject private var account = AccountModel()
     @Environment(\.scenePhase) private var scenePhase
     @State private var isPickingFolder = false
     @AppStorage("swrm.lastSeenWhatsNew") private var lastSeenWhatsNew = ""
     @State private var showWhatsNew = false
+    @State private var showSettings = false
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
@@ -25,6 +27,7 @@ struct ContentView: View {
                             Label("Refresh", systemImage: "arrow.clockwise")
                         }
                         ProjectSwitcherMenu(model: model, onOpenNew: { isPickingFolder = true })
+                        Button { showSettings = true } label: { Label("Settings", systemImage: "gearshape") }
                     }
                     ToolbarItem(placement: .automatic) {
                         Text("v\(appVersion)")
@@ -39,9 +42,11 @@ struct ContentView: View {
                     })
                 }
         }
+        .sheet(isPresented: $showSettings) { SettingsView(account: account) }
         .folderPicker(isPresented: $isPickingFolder, onPick: { url in model.openFolder(url) })
         .onAppear {
             model.restoreLastFolder()
+            account.restore()
             if lastSeenWhatsNew != WhatsNew.version {
                 showWhatsNew = true
             }
