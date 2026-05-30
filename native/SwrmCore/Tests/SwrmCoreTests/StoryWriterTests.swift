@@ -31,6 +31,8 @@ final class StoryWriterTests: XCTestCase {
         """
         let url = try write("sc-1.md", original)
         try StoryWriter().setState(storyID: "sc-1", to: .started, in: dir)
+        let returned = try StoryWriter().setState(storyID: "sc-1", to: .started, in: dir)
+        XCTAssertEqual(returned.lastPathComponent, "sc-1.md")
         let after = try String(contentsOf: url, encoding: .utf8)
         let expected = original.replacingOccurrences(of: "state: backlog", with: "state: started")
         XCTAssertEqual(after, expected) // only the state line changed; custom_key + body intact

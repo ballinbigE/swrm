@@ -10,11 +10,13 @@ public enum StoryWriteError: Error, Equatable {
 public struct StoryWriter {
     public init() {}
 
-    public func setState(storyID: String, to newState: WorkflowState, in directory: URL) throws {
+    @discardableResult
+    public func setState(storyID: String, to newState: WorkflowState, in directory: URL) throws -> URL {
         let url = try fileURL(for: storyID, in: directory)
         let text = try String(contentsOf: url, encoding: .utf8)
         let updated = Self.replaceState(in: text, with: newState.rawValue)
         try updated.write(to: url, atomically: true, encoding: .utf8)
+        return url
     }
 
     private func fileURL(for id: String, in dir: URL) throws -> URL {
