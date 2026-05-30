@@ -36,4 +36,20 @@ final class GitHubClientTests: XCTestCase {
         do { _ = try await c.currentUser(token: "x"); XCTFail("expected throw") }
         catch { XCTAssertEqual(error as? GitHubError, .decode) }
     }
+
+    func testCIStatusRollup() async throws {
+        func runs(_ json: String) -> GitHubClient { client(status: 200, body: json) }
+        // all completed/success
+        let ok = try await runs(#"{"check_runs":[{"status":"completed","conclusion":"success"}]}"#).ciStatus(owner: "o", repo: "r", ref: "s", token: "t")
+        XCTAssertEqual(ok, .success)
+        // a failure
+        let bad = try await runs(#"{"check_runs":[{"status":"completed","conclusion":"success"},{"status":"completed","conclusion":"failure"}]}"#).ciStatus(owner: "o", repo: "r", ref: "s", token: "t")
+        XCTAssertEqual(bad, .failure)
+        // in progress
+        let run = try await runs(#"{"check_runs":[{"status":"in_progress","conclusion":null}]}"#).ciStatus(owner: "o", repo: "r", ref: "s", token: "t")
+        XCTAssertEqual(run, .pending)
+        // empty
+        let none = try await runs(#"{"check_runs":[]}"#).ciStatus(owner: "o", repo: "r", ref: "s", token: "t")
+        XCTAssertEqual(none, .none)
+    }
 }
