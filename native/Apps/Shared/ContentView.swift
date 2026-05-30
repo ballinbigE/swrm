@@ -6,7 +6,9 @@ struct ContentView: View {
     @StateObject private var model = BoardModel()
     @StateObject private var account = AccountModel()
     @StateObject private var ci = CIStatusModel()
+    @StateObject private var pushPR = PushPRModel()
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.openURL) private var openURL
     @State private var isPickingFolder = false
     @AppStorage("swrm.lastSeenWhatsNew") private var lastSeenWhatsNew = ""
     @State private var showWhatsNew = false
@@ -21,6 +23,23 @@ struct ContentView: View {
             content
                 .navigationTitle(model.folderName ?? "Swrm")
                 .task(id: model.folderName) { await ci.refresh(dir: model.storiesDirectory) }
+                .alert("Push & PR", isPresented: Binding(
+                    get: {
+                        switch pushPR.state { case .opened, .error: return true; default: return false }
+                    },
+                    set: { if !$0 { pushPR.reset() } }
+                )) {
+                    if case let .opened(url) = pushPR.state, let u = URL(string: url) {
+                        Button("Open PR") { openURL(u) }
+                    }
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    switch pushPR.state {
+                    case .opened(let url): Text("Pull request opened:\n\(url)")
+                    case .error(let m): Text(m)
+                    default: Text("")
+                    }
+                }
                 .toolbar {
                     ToolbarItemGroup {
                         Button {
@@ -30,6 +49,14 @@ struct ContentView: View {
                         }
                         ProjectSwitcherMenu(model: model, onOpenNew: { isPickingFolder = true })
                         CIBadge(status: ci.status) { Task { await ci.refresh(dir: model.storiesDirectory) } }
+                        #if os(macOS)
+                        Button {
+                            Task { await pushPR.pushAndOpenPR(dir: model.storiesDirectory) }
+                        } label: {
+                            if case .working = pushPR.state { ProgressView() } else { Label("Push & PR", systemImage: "arrow.up.circle") }
+                        }
+                        .disabled({ if case .working = pushPR.state { return true } else { return false } }())
+                        #endif
                         Button { showSettings = true } label: { Label("Settings", systemImage: "gearshape") }
                     }
                     ToolbarItem(placement: .automatic) {
