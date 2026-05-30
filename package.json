@@ -1,6 +1,6 @@
 {
   "name": "swrm",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "description": "MCP-native kanban for parallel coding agents. Markdown-friendly. Localhost-first.",
   "bin": {
     "swrm": "dist/cli.js"

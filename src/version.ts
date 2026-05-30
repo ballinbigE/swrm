@@ -22,10 +22,11 @@ export function appVersion(): string {
 
 /** Canonical What's New content for the current release. */
 export const WHATS_NEW = {
-  version: '0.9.0',
-  title: 'swrm v0.9.0 — Start Work',
+  version: '1.0.0',
+  title: 'swrm v1.0.0 — The Loop Closes 🐝',
   notes: [
-    '🌿 **Start work on a card.** Right-click any card on the Mac board → "Start work" → swrm cuts the `sc-id/slug` branch and checks it out (or switches to it if it already exists).',
-    '🔁 **Closes the loop.** Start work → drag to move (auto-commit) → Push & PR. The board and your git history finally move together.',
+    '🎉 **swrm 1.0.** A real Mac & iOS app: open a folder of `.swrm/stories`, drag cards (each move auto-commits), connect GitHub, watch live CI, start work on a branch, push & open a PR — and now close the loop.',
+    '✅ **New: Mark done if merged.** Right-click a card → swrm asks GitHub; if its PR has merged, the card moves to Done with a clean commit.',
+    '🔁 **End to end:** Start work → move (commit) → Push & PR → Mark done on merge.',
   ],
 } as const;

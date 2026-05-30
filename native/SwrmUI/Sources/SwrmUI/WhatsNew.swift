@@ -1,8 +1,9 @@
 public enum WhatsNew {
-    public static let version = "0.9.0"
-    public static let title = "swrm v0.9.0 — Start Work"
+    public static let version = "1.0.0"
+    public static let title = "swrm v1.0.0 — The Loop Closes 🐝"
     public static let items: [String] = [
-        "🌿 Start work on a card. Right-click any card on the Mac board → 'Start work' → swrm cuts the sc-id/slug branch and checks it out (or switches to it if it already exists).",
-        "🔁 Closes the loop. Start work → drag to move (auto-commit) → Push & PR. The board and your git history finally move together."
+        "🎉 swrm 1.0. A real Mac & iOS app: open a folder of .swrm/stories, drag cards (each move auto-commits), connect GitHub, watch live CI, start work on a branch, push & open a PR — and now close the loop.",
+        "✅ New: Mark done if merged. Right-click a card → swrm asks GitHub; if its PR has merged, the card moves to Done with a clean commit.",
+        "🔁 End to end: Start work → move (commit) → Push & PR → Mark done on merge."
     ]
 }
