@@ -22,11 +22,11 @@ export function appVersion(): string {
 
 /** Canonical What's New content for the current release. */
 export const WHATS_NEW = {
-  version: '0.3.0',
-  title: 'swrm v0.3.0 — Projects on the Web',
+  version: '0.4.0',
+  title: 'swrm v0.4.0 — Drag to Move',
   notes: [
-    '🗂️ **Projects on the web.** Register a project in Settings, switch from the dropdown, or keep two tabs open side by side — each pinned to its own repo.',
-    '🔭 **Everything scopes per project.** Boards, tasks, markdown sync, and skill runs all stay in their own lane — no cross-project bleed.',
-    '🍯 **One swrm, every surface.** Project switching now lives on Mac, iOS, and the web.',
+    '✏️ **Drag to move (for real).** Drag a card to another column on the Mac/iOS board and it sticks — written straight back to the `.md` file.',
+    '🪶 **Surgical saves.** Only the one line that changed gets rewritten. Your file\'s body, comments, and other fields stay exactly as you left them.',
+    '🐝 **Live + no fighting.** The move shows instantly and the file-watcher won\'t double-fire over your drag.',
   ],
 } as const;

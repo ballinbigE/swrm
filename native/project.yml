@@ -9,8 +9,8 @@ settings:
   base:
     DEVELOPMENT_TEAM: D2PM6R797Q
     SWIFT_VERSION: "5.9"
-    MARKETING_VERSION: "0.3.0"
-    CURRENT_PROJECT_VERSION: "3"
+    MARKETING_VERSION: "0.4.0"
+    CURRENT_PROJECT_VERSION: "4"
 packages:
   SwrmCore:
     path: SwrmCore
