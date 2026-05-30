@@ -8,6 +8,7 @@ struct ContentView: View {
     @StateObject private var ci = CIStatusModel()
     @StateObject private var pushPR = PushPRModel()
     @StateObject private var branch = BranchModel()
+    @StateObject private var prDone = PRDoneModel()
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
     @State private var isPickingFolder = false
@@ -22,6 +23,20 @@ struct ContentView: View {
     private var startWorkHandler: ((Story) -> Void)? {
         #if os(macOS)
         return { story in branch.startWork(story: story, dir: model.storiesDirectory) }
+        #else
+        return nil
+        #endif
+    }
+
+    private var checkDoneHandler: ((Story) -> Void)? {
+        #if os(macOS)
+        return { story in
+            Task {
+                if await prDone.checkMerged(story: story, dir: model.storiesDirectory) == .merged {
+                    model.moveStory(story.id, to: .done)
+                }
+            }
+        }
         #else
         return nil
         #endif
@@ -55,6 +70,12 @@ struct ContentView: View {
                     default: Text("")
                     }
                 }
+                .alert("Mark done", isPresented: Binding(
+                    get: { prDone.lastResult != nil },
+                    set: { if !$0 { prDone.clear() } }
+                )) {
+                    Button("OK", role: .cancel) { }
+                } message: { Text(prDone.lastResult ?? "") }
                 .toolbar {
                     ToolbarItemGroup {
                         Button {
@@ -114,7 +135,7 @@ struct ContentView: View {
             ProgressView("Reading stories…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .loaded(let board):
-            BoardView(board: board, onMove: { id, newState in model.moveStory(id, to: newState) }, onStartWork: startWorkHandler)
+            BoardView(board: board, onMove: { id, newState in model.moveStory(id, to: newState) }, onStartWork: startWorkHandler, onCheckDone: checkDoneHandler)
         case .empty:
             MessageView(
                 icon: "📭",

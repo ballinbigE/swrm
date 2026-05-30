@@ -8,18 +8,23 @@ public struct BoardView: View {
     public let board: Board
     public var onMove: ((String, WorkflowState) -> Void)?
     public var onStartWork: ((Story) -> Void)?
+    public var onCheckDone: ((Story) -> Void)?
 
-    public init(board: Board, onMove: ((String, WorkflowState) -> Void)? = nil, onStartWork: ((Story) -> Void)? = nil) {
+    public init(board: Board,
+                onMove: ((String, WorkflowState) -> Void)? = nil,
+                onStartWork: ((Story) -> Void)? = nil,
+                onCheckDone: ((Story) -> Void)? = nil) {
         self.board = board
         self.onMove = onMove
         self.onStartWork = onStartWork
+        self.onCheckDone = onCheckDone
     }
 
     public var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: 16) {
                 ForEach(board.columns, id: \.state) { column in
-                    ColumnView(column: column, onMove: onMove, onStartWork: onStartWork)
+                    ColumnView(column: column, onMove: onMove, onStartWork: onStartWork, onCheckDone: onCheckDone)
                 }
             }
             .padding(16)
@@ -32,6 +37,7 @@ struct ColumnView: View {
     let column: BoardColumn
     var onMove: ((String, WorkflowState) -> Void)?
     var onStartWork: ((Story) -> Void)?
+    var onCheckDone: ((Story) -> Void)?
     @State private var targeted = false
 
     var body: some View {
@@ -51,6 +57,9 @@ struct ColumnView: View {
                     .contextMenu {
                         if let onStartWork {
                             Button { onStartWork(story) } label: { Label("Start work", systemImage: "arrow.branch") }
+                        }
+                        if let onCheckDone {
+                            Button { onCheckDone(story) } label: { Label("Mark done if merged", systemImage: "checkmark.seal") }
                         }
                     }
             }
