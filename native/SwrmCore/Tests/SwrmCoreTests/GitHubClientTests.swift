@@ -55,6 +55,30 @@ final class GitHubClientTests: XCTestCase {
         catch { if case let GitHubError.network(m) = error { XCTAssertTrue(m.contains("already exist")) } else { XCTFail("\(error)") } }
     }
 
+    func testIsPullMergedTrueWhenMergedAtPresent() async throws {
+        let c = client(status: 200, body: #"[{"merged_at":"2026-05-30T00:00:00Z"}]"#)
+        let merged = try await c.isPullMerged(owner: "o", repo: "r", head: "o:feat", token: "t")
+        XCTAssertTrue(merged)
+    }
+    func testIsPullMergedFalseWhenNullOrEmpty() async throws {
+        let n = client(status: 200, body: #"[{"merged_at":null}]"#)
+        let nullResult = try await n.isPullMerged(owner: "o", repo: "r", head: "o:feat", token: "t")
+        XCTAssertFalse(nullResult)
+        let e = client(status: 200, body: "[]")
+        let emptyResult = try await e.isPullMerged(owner: "o", repo: "r", head: "o:feat", token: "t")
+        XCTAssertFalse(emptyResult)
+    }
+    func testIsPullMergedSendsHeadQueryItem() async throws {
+        var captured: URLRequest?
+        let c = GitHubClient(fetch: { req in
+            captured = req
+            return (Data("[]".utf8), HTTPURLResponse(url: req.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        })
+        _ = try await c.isPullMerged(owner: "o", repo: "r", head: "o:feat", token: "t")
+        let comps = URLComponents(url: captured!.url!, resolvingAgainstBaseURL: false)
+        XCTAssertEqual(comps?.queryItems?.first(where: { $0.name == "head" })?.value, "o:feat")
+    }
+
     func testCIStatusRollup() async throws {
         func runs(_ json: String) -> GitHubClient { client(status: 200, body: json) }
         // all completed/success

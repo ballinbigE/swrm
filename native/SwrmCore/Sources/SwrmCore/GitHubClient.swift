@@ -82,6 +82,27 @@ public struct GitHubClient {
         do { return try JSONDecoder().decode(Repo.self, from: data).default_branch } catch { throw GitHubError.decode }
     }
 
+    public func isPullMerged(owner: String, repo: String, head: String, token: String) async throws -> Bool {
+        var comps = URLComponents(string: "https://api.github.com/repos/\(owner)/\(repo)/pulls")!
+        comps.queryItems = [
+            URLQueryItem(name: "state", value: "all"),
+            URLQueryItem(name: "head", value: head),
+            URLQueryItem(name: "per_page", value: "10"),
+        ]
+        var req = URLRequest(url: comps.url!)
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        req.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
+        let data: Data; let response: URLResponse
+        do { (data, response) = try await fetch(req) } catch { throw GitHubError.network(error.localizedDescription) }
+        guard let http = response as? HTTPURLResponse else { throw GitHubError.network("no response") }
+        if http.statusCode == 401 { throw GitHubError.unauthorized }
+        guard (200..<300).contains(http.statusCode) else { throw GitHubError.network("status \(http.statusCode)") }
+        struct PR: Codable { let merged_at: String? }
+        do { return try JSONDecoder().decode([PR].self, from: data).contains { $0.merged_at != nil } }
+        catch { throw GitHubError.decode }
+    }
+
     public func openPullRequest(owner: String, repo: String, head: String, base: String, title: String, token: String) async throws -> PullRequestRef {
         var req = URLRequest(url: URL(string: "https://api.github.com/repos/\(owner)/\(repo)/pulls")!)
         req.httpMethod = "POST"
