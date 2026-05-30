@@ -22,10 +22,10 @@ export function appVersion(): string {
 
 /** Canonical What's New content for the current release. */
 export const WHATS_NEW = {
-  version: '0.7.0',
-  title: 'swrm v0.7.0 — Live CI on the Board',
+  version: '0.8.0',
+  title: 'swrm v0.8.0 — Push & Open PR',
   notes: [
-    '🚦 **Live CI badge.** Connected your GitHub? The Mac board shows a Passing / Failing / Running pill for your repo\'s HEAD, straight from GitHub check-runs. Tap it to refresh.',
-    '🪟 **Read-only by design.** A live peek at your checks — fetched fresh, never stored, never written to your files. (Mac only — needs git to find the repo.)',
+    '🚀 **Push & open a PR.** One button on the Mac board pushes your current branch to GitHub and opens a pull request into your default branch. Then "Open PR" jumps you straight there.',
+    '🔐 **Your token stays put.** Push auth rides in a transient request header — never written to git config, the remote URL, or any log. (Mac only.)',
   ],
 } as const;

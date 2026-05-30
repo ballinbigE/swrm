@@ -1,8 +1,8 @@
 public enum WhatsNew {
-    public static let version = "0.7.0"
-    public static let title = "swrm v0.7.0 — Live CI on the Board"
+    public static let version = "0.8.0"
+    public static let title = "swrm v0.8.0 — Push & Open PR"
     public static let items: [String] = [
-        "🚦 Live CI badge. Connected your GitHub? The Mac board shows a Passing / Failing / Running pill for your repo's HEAD, straight from GitHub check-runs. Tap it to refresh.",
-        "🪟 Read-only by design. A live peek at your checks — fetched fresh, never stored, never written to your files. (Mac only — needs git to find the repo.)"
+        "🚀 Push & open a PR. One button on the Mac board pushes your current branch to GitHub and opens a pull request into your default branch. Then 'Open PR' jumps you straight there.",
+        "🔐 Your token stays put. Push auth rides in a transient request header — never written to git config, the remote URL, or any log. (Mac only.)"
     ]
 }
