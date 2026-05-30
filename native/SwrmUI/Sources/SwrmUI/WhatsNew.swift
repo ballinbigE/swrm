@@ -1,8 +1,8 @@
 public enum WhatsNew {
-    public static let version = "0.6.0"
-    public static let title = "swrm v0.6.0 — Connect GitHub"
+    public static let version = "0.7.0"
+    public static let title = "swrm v0.7.0 — Live CI on the Board"
     public static let items: [String] = [
-        "🔌 Connect your GitHub. Settings → paste a fine-grained token → 'Connected as @you'. The token lives in the Keychain and nowhere else.",
-        "🧱 The key to the good stuff. This unlocks what's next — live CI badges, push, and pull requests, straight from the board."
+        "🚦 Live CI badge. Connected your GitHub? The Mac board shows a Passing / Failing / Running pill for your repo's HEAD, straight from GitHub check-runs. Tap it to refresh.",
+        "🪟 Read-only by design. A live peek at your checks — fetched fresh, never stored, never written to your files. (Mac only — needs git to find the repo.)"
     ]
 }
